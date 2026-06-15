@@ -1,0 +1,739 @@
+我先研究两个项目的结构，然后给出整合方案。
+        
+            
+toolName: view_folder
+            
+status: success
+          
+d:\resume-upup\resume-matcher-agent-cn
+          
+
+        
+            
+toolName: view_folder
+            
+status: success
+          
+d:\resume-upup\resume-matcher-agent-cn\a4cv-main
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\README.md
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\AI 优化功能.txt
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\index.html
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: function (loadMD|serializeMarkdown|loadJSON|exportMD)
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: URLSearchParams|location\.search|window\.location\.hash
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\dashboard\resume-analysis.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\dashboard\resume-component.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\index.html
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\index.html
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\app\(default)\dashboard\page.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\backend\app\api\router\v1\resume.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\backend\app\schemas\pydantic\resume_improvement.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\backend\app\services\score_improvement_service.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\common\resume_previewer_context.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\dashboard\resume-component.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\backend\app\prompt\hr_judge.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\dashboard\paste-job-description.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\components\dashboard\job-listings.tsx
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: function parseMD|SAMPLE_MD\s*=|const SAMPLE_MD|function normalizeImportedMarkdown
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\.env.sample
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\lib\api\config.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\netlify.toml
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\index.html
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\index.html
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\a4cv-main\可视化简历生成器-1.0功能整理.md
+          
+我把两个项目研究清楚了，下面是建议方案。
+
+## 现状梳理
+
+| 项 | 简历优化器（前端 + 后端） | a4cv-main 编辑器 |
+|---|---|---|
+| 技术栈 | Next.js 14 + FastAPI | 纯静态单页 `index.html` + `vendor/` |
+| 数据流 | 简历/岗位 → `/improve`（HR Judge Prompt）→ 返回 `analysis_result` 整篇 Markdown 报告 | 接受 Markdown → `parseMD()` → 渲染到 A4 画布 |
+| 关键发现 | Prompt 的 Step 4 明确要求 LLM 在 \`\`\`md 代码块里输出"修改后简历范本"，但前端 dashboard 直接把整篇报告 HTML 渲染了，**没人专门抽这个代码块** | 有 `loadMD(md)` 和 `normalizeImportedMarkdown()` 两个入口，但没有 URL/sessionStorage 接收外部投递的逻辑（`URLSearchParams` 全文 0 匹配） |
+| a4cv 内的 AI 优化 | — | 已经内置 DeepSeek/OpenAI 兼容接口的「✦ AI 优化」按钮 |
+
+**核心结论**：两边都没有为"对接"留接口，需要做的工作主要是 ① 抽出"修改后简历"代码块 ② 给 a4cv 加启动钩子接收外部投递 ③ 解决同源问题。
+
+---
+
+## 推荐方案：后端抽 markdown + 同源 sessionStorage 中转
+
+### 架构图
+```
+┌────────────────────────────────────────────────────────────────┐
+│ Dashboard 分析页 (Next.js :3000)                              │
+│  「在可视化编辑器中继续优化」按钮                                │
+│      │                                                         │
+│      │ 1) GET /api/v1/resume/improved-markdown?resume_id&job_id│
+│      ▼                                                         │
+│  FastAPI 后端 ── 从 DB 读 analysis_result ── 正则抽 ```md ```   │
+│      │  (若无代码块，fallback: 用 resume.content 简单拼装)      │
+│      │  返回 { markdown: "# 姓名\n## 职位\n..." }              │
+│      ▼                                                         │
+│  sessionStorage.setItem('pendingResumeMD', md)                  │
+│  window.open('/a4cv/?pickup=session', '_blank')                │
+└────────────────────────────────────────────────────────────────┘
+                              │ 同源（同 protocol/host/port）
+                              ▼
+┌────────────────────────────────────────────────────────────────┐
+│ a4cv 编辑器 (Next.js 静态托管 :3000/a4cv/)                      │
+│  启动钩子:                                                       │
+│    if (new URLSearchParams(loc.search).get('pickup')==='session')│
+│       md = sessionStorage.getItem('pendingResumeMD')           │
+│       if (md) loadMD(md);  showToast('已从优化结果载入')        │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### 为什么选 sessionStorage 而不是 URL 传参
+
+| 维度 | URL `?md=...` | sessionStorage |
+|---|---|---|
+| 简历 markdown 通常 2-8KB | URL 通常 ≤2KB 会被截断，浏览器差异大 | 5MB 同源限制，足够 |
+| 同源要求 | 不需要 | 需要同源 |
+| 实现复杂度 | 需 LZ-String 压缩 | 几行代码 |
+| 用户体验 | URL 又丑又长 | 干净 |
+
+**sessionStorage 要求同源**，所以关键配套步骤是把 a4cv-main 部署成 Next.js 静态资源：`apps/frontend/public/a4cv/`，让两者共用 `localhost:3000`。
+
+---
+
+## 实施步骤（最小改动）
+
+### Step 1 — 同源托管 a4cv（不改 a4cv 源码结构）
+- 把 `a4cv-main/` 复制到 `apps/frontend/public/a4cv/`（`vendor/` 资源相对路径已自带，无需改）
+- 浏览器访问 `http://localhost:3000/a4cv/` 即可使用
+- 验证：a4cv 内"导入文档""AI 优化"等所有相对路径资源都仍能工作
+
+### Step 2 — a4cv 启动钩子（约 10 行 JS）
+在 [a4cv-main/index.html](file:///d:/resume-upup/resume-matcher-agent-cn/a4cv-main/index.html) 的 `let state = {...}` 声明**之后**插入：
+```js
+(function pickupFromSession(){
+  const p = new URLSearchParams(location.search);
+  if (p.get('pickup') === 'session') {
+    const md = sessionStorage.getItem('pendingResumeMD');
+    if (md) {
+      sessionStorage.removeItem('pendingResumeMD');
+      loadMD(md);
+      showToast('已从优化结果载入简历，可在右侧继续微调');
+    }
+  } else if (p.get('md')) {
+    // 备选：短简历直接走 URL，避免同源限制
+    loadMD(decodeURIComponent(p.get('md')));
+  }
+})();
+```
+
+### Step 3 — 后端新增抽取接口
+文件 [apps/backend/app/api/router/v1/resume.py](file:///d:/resume-upup/resume-matcher-agent-cn/apps/backend/app/api/router/v1/resume.py)：
+```python
+@resume_router.get("/improved-markdown")
+async def get_improved_markdown(
+    resume_id: str, job_id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    从已生成的 analysis_result 中抽取 \`\`\`md 代码块；
+    没有则用 Resume.content 拼成最小可用 Markdown。
+    """
+    import re
+    # 1) 读最近的 score_improvement 执行结果（需要给 ProcessedResume 加字段或临时重跑）
+    #    简化：重跑一次 /improve 拿 analysis_result
+    score_service = ScoreImprovementService(db=db)
+    result = await score_service.run(resume_id=resume_id, job_id=job_id)
+    text = result.get("analysis_result", "")
+    m = re.search(r"```(?:md|markdown)?\s*([\s\S]+?)\s*```", text)
+    if m and "# " in m.group(1):
+        return {"markdown": m.group(1).strip()}
+    # 2) fallback: 直接读原始简历
+    resume = await db.get(Resume, UUID(resume_id))
+    return {"markdown": (resume.content or "").strip()}
+```
+
+### Step 4 — 前端 dashboard 新增按钮
+文件 [apps/frontend/app/(default)/dashboard/page.tsx](file:///d:/resume-upup/resume-matcher-agent-cn/apps/frontend/app/(default)/dashboard/page.tsx)，在分析结果卡片页脚插入：
+```tsx
+<Button
+  onClick={async () => {
+    const r = await fetch(
+      `${API_URL}/api/v1/resume/improved-markdown?resume_id=${data.resume_id}&job_id=${data.job_id}`
+    );
+    const { markdown } = await r.json();
+    sessionStorage.setItem('pendingResumeMD', markdown);
+    window.open('/a4cv/?pickup=session', '_blank');
+  }}
+  className="bg-gradient-to-r from-purple-500 to-pink-500"
+>
+  ✦ 在可视化编辑器中继续优化
+</Button>
+```
+
+### Step 5（可选增强）— 把 JD 一起投递给 a4cv 的 AI 弹窗
+让 a4cv 启动时自动填 JD：
+```js
+const jd = sessionStorage.getItem('pendingResumeJD');
+if (jd) { sessionStorage.removeItem('pendingResumeJD'); /* 等用户点 AI 按钮时再注入 */ }
+```
+a4cv 原生 AI 优化按钮已支持 JD 输入，不做这一步也不影响主流程。
+
+---
+
+## 风险与边界
+
+1. **同源是关键约束**：必须把 a4cv 放进 Next.js `public/` 或反代到同域。**不可**用 Netlify 跨域托管。
+2. **sessionStorage 容量**：5MB 远大于一份简历 markdown，足够。
+3. **数据隐私**：sessionStorage 在 tab 关闭后自动清除，符合"临时投递"语义，且不污染 a4cv 自身的 `localStorage`。
+4. **a4cv 内"AI 优化"按钮的 API Key**：仍由用户在 a4cv 端自己填写（沿用它现有的 UI 和 localStorage），不污染我们后端账户体系。
+5. **Prompt 改进**：当前 `hr_judge.py` 已要求 LLM 输出代码块，但格式不一定稳；可考虑在 Step 4 后追加一行强化指令保证 \`\`\`md...\`\`\` 包裹。
+6. **a4cv 的模块识别关键字**（[parseMD 第 2046 行](file:///d:/resume-upup/resume-matcher-agent-cn/a4cv-main/index.html#L2046)）：自我评价 / 工作经历 / 项目经历 / 教育背景 / 技能标签 / 证书与荣誉 —— 我们后端 prompt 输出的代码块应**对齐这套命名**，否则部分模块会进 `mixed` 类型。后端 prompt 已经在自我评价/关键成果/工作经历/项目经历/教育背景/技能标签/证书与荣誉之间，**基本兼容**，仅"关键成果"会被识别为 `list` 类型（可正常显示）。
+
+---
+
+## 不推荐的备选
+
+| 方案 | 不推荐原因 |
+|---|---|
+| 纯 URL 传 `?md=...` | URL 长度限制 + 中文 encode 难看 + 用户手动改 URL 风险 |
+| 把 a4cv 改造成 React 组件内嵌 | 工作量 5-10 倍，破坏 a4cv 单文件可独立分发特性 |
+| 跨域 postMessage | 要在 a4cv 加 message 监听，且父页面要常驻，复杂度高 |
+| 后端代理 a4cv 全部资源 | 资源多、与 a4cv 上游维护冲突 |
+
+---
+
+## 请确认以下几点后我再开始实现
+
+1. **同源托管**方式：选 ① 复制到 `apps/frontend/public/a4cv/`（简单）还是 ② 用 Nginx 反代（保留独立部署）？
+2. **后端抽取策略**：接受每次点按钮都重跑一次 `/improve`（简单但慢 ~10-30s）？还是给 `ProcessedResume` 加一个 `improved_markdown` 字段缓存（需要 schema 改动）？
+3. **JD 是否一起投递给 a4cv 的 AI 弹窗**？默认我先不做，留作可选增强。
+4. **是否需要把 a4cv 内的「AI 优化」按钮**改成默认调用我们后端的同款 LLM（统一账号/计费）？默认**不动**，让 a4cv 继续用自己的 Key。
+
+确认后我会按上面 4-5 步逐步落地并验证。
+
+
+
+
+我先把 a4cv-main 的关键结构再深入看一下，然后给你新的搬运方案。
+        
+            
+toolName: run_command
+            
+status: running
+          
+command: powershell -Command "Get-ChildItem -Path 'd:\resume-upup\resume-matcher-agent-cn\a4cv-main' -Recurse -File | Select-Object FullName, @{N='KB';E={[math]::Round($_.Length/1KB,1)}} | Format-Table -AutoSize" undefined
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: ^\s*<(div|script|link|meta|body|html|head|style|button)|^\s*const [A-Z_]+ = |^\s*function [A-Za-z_]+\(
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: localStorage\.(getItem|setItem|removeItem)|sessionStorage
+          
+
+        
+            
+toolName: check_command_status
+            
+status: success
+          
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: ^\s*let state|^\s*const PRESETS|^\s*const DEFAULT_AVATAR|^\s*const PROFILES_KEY|^\s*const KEY\s*=|^const STYLE|function renderResume\(|function exportImage\(|function exportPdf\(|function exportWord\(|function exportHtml\(|function exportMarkdown\(
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\next.config.ts
+          
+
+        
+            
+toolName: file_search
+            
+status: success
+          
+file_pattern: a4cv-main/**/*.{js,css,html,png,jpg}
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\package.json
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\app\(default)\layout.tsx
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: d:\resume-upup\resume-matcher-agent-cn\apps\frontend\tsconfig.json
+          
+我又深入看了一遍 a4cv 的内部结构。这条新方向我推荐用**"渐进式搬入"**，下面是新方案的详细设计。
+
+## a4cv 资产盘点（影响搬运策略）
+
+| 资产 | 体积/规模 | 备注 |
+|---|---|---|
+| `index.html` | ~5500 行（含 ~1300 行内联 CSS、~4000 行 JS） | 是个完整单文件 SPA |
+| `vendor/Sortable.min.js` | ~40KB | 拖拽排序 |
+| `vendor/marked.min.js` | ~30KB | Markdown 渲染（但 a4cv 内部用的是自写 `parseMD`） |
+| `vendor/mammoth.browser.min.js` | ~280KB | docx 解析 |
+| `vendor/jspdf.umd.min.js` | ~350KB | PDF 导出 |
+| `vendor/html2canvas.min.js` | ~200KB | 截图导出 |
+| 3 张图片 | `default-avatar.png`、`qrcode.jpg`、`resume-studio-function-source.png` |  |
+| localStorage 使用 | `resumeAiSettings`、`resumeProfiles.v1`、`resumeQrImage`、`presetPanelCollapsed`、`presetLayoutDefaults`、`presetStyleDefaults` | 命名空间需要隔离 |
+| 全局变量 | `marked`、`Sortable`、`mammoth`、`html2canvas`、`jspdf` | 都挂在 `window` 上 |
+| 状态 | `let state = {...}` 模块级单例 | 入口函数 `loadMD(md)`、`renderResume()`、`serializeMarkdown()` 等 |
+
+---
+
+## 三种"搬"的方式对比
+
+| 方案 | 改动量 | 状态共享 | UI 一致性 | 后续维护 | 与 a4cv 上游兼容 |
+|---|---|---|---|---|---|
+| **A：纯 URL/sessionStorage 跨页**（上一版） | ★ | 间接 | 低 | 两套 | 高 |
+| **P2：复制到 `public/a4cv/`** | ★★ | 间接 | 低 | 两套 | 高 |
+| **P5：渐进式搬入 Next.js**（**推荐**） | ★★★★ | 直接 React Context | 中→高 | 逐步统一 | 中 |
+
+---
+
+## 推荐方案：P5 渐进式搬入
+
+> **核心思路**：先把 a4cv 原汁原味搬进 Next.js 当作新页面（保持可用），再按需把交互/视觉替换为 React + Tailwind。
+
+### 整体架构
+
+```
+apps/frontend/
+├── app/(default)/
+│   ├── dashboard/page.tsx        ← 现有分析页（加按钮）
+│   └── editor/page.tsx           ← 新增：可视化编辑页（a4cv 搬入）
+├── components/
+│   ├── common/
+│   │   └── resume_previewer_context.tsx  ← 扩展：支持 editor 状态
+│   ├── editor/                   ← 新增目录（按需拆分）
+│   │   ├── a4cv-runtime.tsx     ← a4cv 全部逻辑
+│   │   ├── a4cv-bridge.ts        ← React ↔ a4cv 状态桥
+│   │   └── a4cv.css              ← a4cv 的 ~1300 行 CSS 隔离
+│   └── ui/
+│       └── editor-toolbar.tsx    ← 顶部工具栏（用 React 重做）
+├── public/
+│   └── a4cv-vendor/              ← vendor 静态资源
+│       ├── Sortable.min.js
+│       ├── marked.min.js
+│       ├── mammoth.browser.min.js
+│       ├── jspdf.umd.min.js
+│       └── html2canvas.min.js
+└── ...
+```
+
+### 5 步落地
+
+#### Step 1：物理搬迁（不动逻辑）
+1. 把 `a4cv-main/vendor/*.js` 复制到 `apps/frontend/public/a4cv-vendor/`
+2. 把 `a4cv-main/assets/` 复制到 `apps/frontend/public/a4cv-assets/`
+3. 创建 `apps/frontend/app/(default)/editor/page.tsx`
+
+#### Step 2：包装为 Next.js 页面（最小侵入）
+```tsx
+// apps/frontend/app/(default)/editor/page.tsx
+'use client';
+import Script from 'next/script';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useResumePreview } from '@/components/common/resume_previewer_context';
+
+export default function EditorPage() {
+  const params = useSearchParams();
+  const { improvedData } = useResumePreview();
+
+  // a4cv 状态桥：监听外部数据并调用 a4cv 的 loadMD
+  useEffect(() => {
+    if (!improvedData?.data?.analysis_result) return;
+    fetch(`${API_URL}/api/v1/resume/improved-markdown?resume_id=${improvedData.data.resume_id}&job_id=${improvedData.data.job_id}`)
+      .then(r => r.json())
+      .then(({ markdown }) => {
+        if (typeof window.loadMD === 'function') {
+          window.loadMD(markdown);
+        } else {
+          // a4cv 还没初始化好，挂到全局回调
+          window.__pendingMD = markdown;
+        }
+      });
+  }, [improvedData]);
+
+  return (
+    <>
+      {/* 1) 顺序加载 vendor（必须保持原 index.html 顺序） */}
+      <Script src="/a4cv-vendor/marked.min.js" strategy="afterInteractive" />
+      <Script src="/a4cv-vendor/Sortable.min.js" strategy="afterInteractive" />
+      <Script src="/a4cv-vendor/html2canvas.min.js" strategy="afterInteractive" />
+      <Script src="/a4cv-vendor/jspdf.umd.min.js" strategy="afterInteractive" />
+      <Script src="/a4cv-vendor/mammoth.browser.min.js" strategy="afterInteractive" />
+      
+      {/* 2) 注入 a4cv 的 CSS（用 CSS Module 隔离） */}
+      <link rel="stylesheet" href="/a4cv-runtime.css" />
+      
+      {/* 3) 渲染 a4cv 的 body 模板 */}
+      <div dangerouslySetInnerHTML={{ __html: A4CV_BODY_HTML }} />
+      
+      {/* 4) 注入 a4cv 的逻辑脚本（包裹 IIFE） */}
+      <Script id="a4cv-runtime" strategy="afterInteractive">{`
+        (function(){
+          ${A4CV_SCRIPT_BODY}
+          // 暴露入口给 React 调用
+          window.loadMD = loadMD;
+          window.serializeMarkdown = serializeMarkdown;
+          window.showToast = showToast;
+          // 消费 React 投递的待加载 md
+          if (window.__pendingMD) { loadMD(window.__pendingMD); window.__pendingMD = null; }
+        })();
+      `}</Script>
+    </>
+  );
+}
+```
+
+#### Step 3：CSS 隔离（关键）
+a4cv 有 ~1300 行内联 CSS，会污染全局。**两种策略二选一**：
+- **A. CSS-in-JS 注入**：把 a4cv 的 CSS 放到 `apps/frontend/app/(default)/editor/a4cv-runtime.css`，Next.js 默认会做 CSS 局部 scope
+- **B. Shadow DOM**：把整个 a4cv 渲染到 `<div ref={hostRef}>` + `attachShadow`，最彻底但 a4cv 内部用了 `document.fonts` 等全局 API，要兼容
+- **推荐 A**：成本低、风险小、a4cv 的类名都比较独特（`r-` 前缀、`preset-` 前缀、`tbtn` 等），冲突概率低
+
+#### Step 4：状态桥（React ↔ a4cv）
+```tsx
+// components/editor/a4cv-bridge.ts
+declare global {
+  interface Window {
+    loadMD: (md: string) => void;
+    serializeMarkdown: () => string;
+    showToast: (msg: string) => void;
+    __pendingMD?: string;
+  }
+}
+```
+- dashboard 的"打开编辑器"按钮：
+  ```tsx
+  // apps/frontend/app/(default)/dashboard/page.tsx
+  const handleOpenEditor = () => {
+    sessionStorage.setItem('pendingResumeId', data.resume_id);
+    sessionStorage.setItem('pendingJobId', data.job_id);
+    router.push('/editor');
+  };
+  ```
+- editor 页面通过 `useSearchParams` + `sessionStorage` 拿到 ids，调后端接口拿 markdown，再调 `window.loadMD()`
+
+#### Step 5：UI 一致性（按需）
+- 用 Tailwind 重做顶部工具栏（保留 a4cv 的"导入文档""AI 优化""导出"按钮）
+- 替换品牌名（Resume Studio → 简历优化器）
+- 移除 a4cv 的"公众号二维码""载入示例"等私货
+- 把 a4cv 的 `localStorage` 键名加前缀 `a4cv_` 避免冲突
+
+### 与上一版方案 A 的对比
+
+| 维度 | 方案 A（sessionStorage 中转） | **方案 P5（搬入 Next.js）** |
+|---|---|---|
+| 同源问题 | 需要复制到 `public/` | 天然同源 |
+| 状态共享 | sessionStorage 间接 | **直接 React Context** |
+| 资源加载 | a4cv 自己 fetch | 走 Next.js 的 `<Script>` 优化 |
+| CSS 作用域 | 不需要处理 | 需做 CSS 隔离 |
+| 后续可演进 | 仍然是 a4cv 独立 UI | **可逐步替换为 React + Tailwind** |
+| 与 a4cv 上游同步 | 简单（直接覆盖） | 中等（要 merge 改动） |
+| 实现工作量 | 0.5 人天 | 2-3 人天 |
+| 长期价值 | 工具型集成 | **产品化整合** |
+
+---
+
+## 风险与缓解
+
+| 风险 | 缓解措施 |
+|---|---|
+| a4cv 的 CSS 与 Tailwind 冲突 | a4cv 自身类名有 `r-`、`tbtn`、`preset-` 等独特前缀；放独立 CSS 文件 + 编辑器页用 `BackgroundContainer` 不包内层 |
+| a4cv 的全局 `window` 污染 | 用 IIFE 包裹，暴露明确接口（`window.loadMD` 等） |
+| a4cv 用了 `window.module/exports/define` 切换 | a4cv 自己已处理（在 index.html 第 12-14 行），照搬即可 |
+| `localStorage` 键名冲突 | 改用 `a4cv_resumeAiSettings`、`a4cv_resumeProfiles.v1` 等前缀 |
+| Next.js 的 strict mode 双调用 `useEffect` | a4cv 内部 `state` 是模块单例，React 18 双调用可能导致重复初始化 → 用 `useRef` 锁 |
+| 字体（Google Fonts）跨域 | 保留原有 `<link>` 即可 |
+| `app/(default)/layout.tsx` 的 `BackgroundContainer` 与 a4cv 的暗色顶栏冲突 | editor 页用自己的 layout（用 Next.js 的 Route Groups 隔离） |
+| 移动端 | a4cv 是桌面端设计，复用其响应式 |
+
+---
+
+## 推荐的最终方案：**P5 渐进式搬入**
+
+**为什么是这个：**
+1. **契合用户原话"搬过去"**：内化而非外挂
+2. **风险可控**：先搬后改，每步都可回滚
+3. **数据流最干净**：React Context 直接对接 a4cv 的 `loadMD`，无需中转
+4. **未来可演进**：CSS/UI 逐步替换为 React + Tailwind，体验向系统原生靠拢
+5. **保留 a4cv 上游升级路径**：搬入后 a4cv 升级只需重新拷贝 vendor + 重新生成 page 模板
+
+---
+
+## 请确认以下几点后我再开始实施
+
+1. **是否接受"先搬后改"的渐进式路径**？（先保 a4cv 完整功能运行，后续再优化 UI 一致性）
+2. **CSS 隔离策略**：选 ① 独立 CSS 文件（推荐，简单）还是 ② Shadow DOM（彻底但复杂）？
+3. **后端是否新增 `/improved-markdown` 抽取接口**？还是先在前端用正则从 `analysis_result` 字符串里抠？
+4. **a4cv 的"AI 优化"按钮**：保留 a4cv 自带的 DeepSeek（用户自己填 Key），还是后续替换为调用我们后端的同款 LLM（统一账户/计费）？建议**先保留**，不阻塞主流程
+5. **是否同时支持"无分析结果时直接进入 a4cv 自由编辑"**？建议支持（dashboard 卡片上加"打开空白编辑器"次按钮）
+
+确认后我会按 Step 1-5 顺序落地。
