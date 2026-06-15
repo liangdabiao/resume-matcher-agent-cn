@@ -10,7 +10,7 @@ export default function Component() {
 				htmlFor={id}
 				className="bg-background text-foreground absolute start-1 top-0 z-10 block -translate-y-1/2 px-2 text-xs font-medium group-has-disabled:opacity-50"
 			>
-				Textarea with overlapping label
+				带浮动标签的文本框
 			</Label>
 			<Textarea id={id} />
 		</div>

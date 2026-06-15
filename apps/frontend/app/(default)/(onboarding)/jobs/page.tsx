@@ -7,13 +7,13 @@ const ProvideJobDescriptionsPage = () => {
 		<BackgroundContainer>
 			<div className="flex flex-col items-center justify-center max-w-7xl">
 				<h1 className="text-6xl font-bold text-center mb-12 text-white">
-					Provide Job Descriptions
+					粘贴岗位描述
 				</h1>
 				<p className="text-center text-gray-300 text-xl mb-8 max-w-xl mx-auto">
-					Paste up to three job descriptions below. We&apos;ll use these to compare
-					against your resume and find the best matches.
+					请粘贴目标岗位 JD。系统会结合你的简历进行匹配分析，并生成修改建议。
+					
 				</p>
-				<Suspense fallback={<div>Loading input...</div>}>
+				<Suspense fallback={<div>正在加载输入框...</div>}>
 					<JobDescriptionUploadTextArea />
 				</Suspense>
 			</div>

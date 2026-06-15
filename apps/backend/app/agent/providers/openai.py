@@ -17,9 +17,9 @@ class OpenAIProvider(Provider):
                  base_url: str | None = None, opts: Dict[str, Any] = None):
         if opts is None:
             opts = {}
-        api_key = api_key or settings.LLM_API_KEY or os.getenv("OPENAI_API_KEY")
+        api_key = api_key or settings.LLM_API_KEY or os.getenv("LLM_API_KEY")
         if not api_key:
-            raise ProviderError("OpenAI API key is missing")
+            raise ProviderError("LLM_API_KEY is missing")
         base_url = base_url or settings.LLM_BASE_URL
         self._client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model_name
@@ -44,15 +44,11 @@ class OpenAIProvider(Provider):
             raise ProviderError(f"OpenAI - error generating response: {e}") from e
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
-        if generation_args:
-            logger.warning(f"OpenAIProvider - generation_args not used {generation_args}")
+        allowed_options = {"temperature", "top_p", "max_tokens"}
         myopts = {
-            "temperature": self.opts.get("temperature", 0),
-            "top_p": self.opts.get("top_p", 0.9),
-# top_k not currently supported by any OpenAI model - https://community.openai.com/t/does-openai-have-a-top-k-parameter/612410
-#            "top_k": generation_args.get("top_k", 40),
-# neither max_tokens
-#            "max_tokens": generation_args.get("max_length", 20000),
+            key: value
+            for key, value in self.opts.items()
+            if key in allowed_options and value is not None
         }
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
 

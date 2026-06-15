@@ -16,14 +16,14 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   title: '简历匹配智能体',
-  description: 'Build your resume with Resume Matcher',
+  description: '使用简历匹配智能体深度优化你的简历',
   applicationName: '简历匹配智能体',
-  keywords: ['resume', 'matcher', 'job', 'application'],
+  keywords: ['简历', '匹配', '求职', '职位分析'],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-US">
+    <html lang="zh-CN">
       <body
         className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-white text-gray-900`}
       >

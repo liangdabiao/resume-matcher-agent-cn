@@ -97,10 +97,12 @@ Key endpoints:
 - `SESSION_SECRET_KEY` - Secret key for session management
 - `SYNC_DATABASE_URL` - SQLite database URL for synchronous operations
 - `ASYNC_DATABASE_URL` - SQLite database URL for asynchronous operations
-- `LLM_PROVIDER` - LLM provider (default: ollama)
-- `LL_MODEL` - Language model to use (default: gemma3:4b)
-- `EMBEDDING_PROVIDER` - Embedding provider (default: ollama)
-- `EMBEDDING_MODEL` - Embedding model to use (default: dengcao/Qwen3-Embedding-0.6B:Q8_0)
+- `LLM_API_KEY` - Zhipu API key for OpenAI-compatible LLM calls
+- `LLM_BASE_URL` - OpenAI-compatible API base URL (default: https://open.bigmodel.cn/api/paas/v4/)
+- `LL_MODEL` - Language model to use (default: glm-5.1)
+- `EMBEDDING_API_KEY` - Zhipu API key for embeddings, usually same as `LLM_API_KEY`
+- `EMBEDDING_BASE_URL` - OpenAI-compatible embedding API base URL
+- `EMBEDDING_MODEL` - Embedding model to use (default: embedding-3)
 
 ### Frontend (.env)
 - `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000)

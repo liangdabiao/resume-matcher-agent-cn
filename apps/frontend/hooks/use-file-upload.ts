@@ -105,7 +105,7 @@ export const useFileUpload = (
   const validateFile = useCallback(
     (file: File): string | null => { // Simplified: always validates a File object
       if (file.size > maxSize) {
-        return `File "${file.name}" exceeds the maximum size of ${formatBytes(maxSize)}.`
+        return `文件“${file.name}”超过最大限制 ${formatBytes(maxSize)}。`
       }
 
       if (accept !== "*/*" && accept !== "*") {
@@ -126,7 +126,7 @@ export const useFileUpload = (
         })
 
         if (!isAccepted) {
-          return `File "${file.name}" type not accepted. Accepted types: ${accept}`
+          return `文件“${file.name}”类型不支持。支持的类型：${accept}`
         }
       }
       return null
@@ -148,7 +148,7 @@ export const useFileUpload = (
   const _uploadFileInternal = async (fileToUpload: FileWithPreview) => {
     // Ensure fileToUpload.file is a File instance for upload
     if (!(fileToUpload.file instanceof File)) {
-      const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
+      const errorMsg = `无法上传“${(fileToUpload.file as FileMetadata).name}”：不是可直接上传的有效文件。`;
       console.error(errorMsg, fileToUpload);
       // Update this specific file's metadata with an error
       const updatedFileWithMetaError: FileWithPreview = {
@@ -170,7 +170,7 @@ export const useFileUpload = (
     }
 
     if (!uploadUrl) {
-      const errorMsg = "Upload URL is not configured."
+      const errorMsg = "上传接口地址未配置。"
       console.warn(errorMsg, "File not uploaded:", fileToUpload.file.name)
       // Update file metadata to reflect it wasn't uploaded due to config
        const fileWithConfigError: FileWithPreview = {
@@ -210,10 +210,10 @@ export const useFileUpload = (
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
-        let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
+        let errorDetail = `文件 ${fileToUpload.file.name} 上传失败。状态：${response.status} ${response.statusText}`;
         try {
           const errorText = await response.text();
-          errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
+          errorDetail += ` - 服务端响应：${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
         } catch (textError: unknown) {
           console.warn("Could not read error response text:", textError);
         }

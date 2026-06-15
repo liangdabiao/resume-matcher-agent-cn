@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Resume Matcher is an AI-powered platform that helps users optimize their resumes to match job descriptions. The application consists of:
 - Backend: FastAPI (Python) with SQLite database
 - Frontend: Next.js (React/TypeScript) with Tailwind CSS
-- AI: Ollama for local AI model serving
+- AI: Zhipu OpenAI-compatible API for LLM and embedding calls
 
 ## Common Development Commands
 
@@ -94,7 +94,8 @@ Key services:
 - Backend `.env` file (copied from `apps/backend/.env.sample`)
 
 ## AI Integration
-- Ollama is used for local AI model serving
+- Zhipu is used through the OpenAI-compatible API.
 - Default models:
-  - LLM: gemma3:4b
-  - Embedding: dengcao/Qwen3-Embedding-0.6B:Q8_0
+  - LLM: glm-5.1
+  - Embedding: embedding-3
+- Configure `LLM_API_KEY` in `apps/backend/.env` before running LLM-backed flows.

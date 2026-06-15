@@ -16,7 +16,7 @@ export default function PasteJobDescription({ onClose, onPaste }: PasteJobDescri
 
 	const handlePaste = () => {
 		if (!jobDescription.trim()) {
-			setError('Job description cannot be empty.');
+			setError('岗位描述不能为空。');
 			return;
 		}
 		setError(null);
@@ -28,13 +28,13 @@ export default function PasteJobDescription({ onClose, onPaste }: PasteJobDescri
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 			<div className="relative w-full max-w-2xl rounded-xl bg-gray-800 p-6 shadow-xl">
 				<div className="flex items-center justify-between pb-4 border-b border-gray-700">
-					<h3 className="text-lg font-semibold text-white">Paste Job Description</h3>
+					<h3 className="text-lg font-semibold text-white">粘贴岗位描述</h3>
 					<Button
 						size="icon"
 						variant="ghost"
 						className="text-muted-foreground/80 hover:text-foreground -me-2 size-9 hover:bg-transparent"
 						onClick={onClose}
-						aria-label="Close modal"
+						aria-label="关闭弹窗"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 					</Button>
@@ -49,10 +49,10 @@ export default function PasteJobDescription({ onClose, onPaste }: PasteJobDescri
 							<ClipboardPasteIcon className="size-5 opacity-60" />
 						</div>
 						<p className="mb-2 text-lg font-semibold text-white">
-							Paste Job Description
+							粘贴岗位描述
 						</p>
 						<p className="text-muted-foreground text-sm">
-							Paste the full job description text below.
+							请在下方粘贴完整岗位描述。
 						</p>
 					</div>
 
@@ -62,9 +62,9 @@ export default function PasteJobDescription({ onClose, onPaste }: PasteJobDescri
 							setJobDescription(e.target.value);
 							if (error) setError(null);
 						}}
-						placeholder="Paste job description here..."
+						placeholder="请粘贴岗位描述..."
 						className="w-full min-h-[200px] rounded-md border-gray-600 bg-gray-700 p-3 text-white focus:ring-blue-500 focus:border-blue-500"
-						aria-label="Job description text area"
+						aria-label="岗位描述输入框"
 					/>
 					{error && (
 						<p className="text-destructive mt-2 text-xs" role="alert">
@@ -79,13 +79,13 @@ export default function PasteJobDescription({ onClose, onPaste }: PasteJobDescri
 						onClick={onClose}
 						className="text-white border-gray-600 hover:bg-gray-700"
 					>
-						Cancel
+						取消
 					</Button>
 					<Button
 						onClick={handlePaste}
 						className="bg-blue-600 hover:bg-blue-700 text-white"
 					>
-						Save Job Description
+						保存岗位描述
 					</Button>
 				</div>
 			</div>

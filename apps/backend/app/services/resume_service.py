@@ -1,10 +1,11 @@
-import os
+import io
 import uuid
 import json
-import tempfile
+import zipfile
 import logging
+import xml.etree.ElementTree as ET
 
-from markitdown import MarkItDown
+from pdfminer.high_level import extract_text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from pydantic import ValidationError
@@ -23,96 +24,57 @@ logger = logging.getLogger(__name__)
 class ResumeService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.md = MarkItDown(enable_plugins=False)
         self.json_agent_manager = AgentManager()
-        
-        # Validate dependencies for DOCX processing
-        self._validate_docx_dependencies()
-
-    def _validate_docx_dependencies(self):
-        """Validate that required dependencies for DOCX processing are available"""
-        missing_deps = []
-        
-        try:
-            # Check if markitdown can handle docx files
-            from markitdown.converters import DocxConverter
-            # Try to instantiate the converter to check if dependencies are available
-            DocxConverter()
-        except ImportError:
-            missing_deps.append("markitdown[all]==0.1.2")
-        except Exception as e:
-            if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
-                missing_deps.append("markitdown[all]==0.1.2 (current installation missing DOCX extras)")
-        
-        if missing_deps:
-            logger.warning(
-                f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
-                f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
-            )
-
 
     async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
     ):
         """
-        Converts resume file (PDF/DOCX) to text using MarkItDown and stores it in the database.
-
-        Args:
-            file_bytes: Raw bytes of the uploaded file
-            file_type: MIME type of the file ("application/pdf" or "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-            filename: Original filename
-            content_type: Output format ("md" for markdown or "html")
-
-        Returns:
-            None
+        Converts resume file (PDF/DOCX) to text and stores it in the database.
         """
-        with tempfile.NamedTemporaryFile(
-            delete=False, suffix=self._get_file_extension(file_type)
-        ) as temp_file:
-            temp_file.write(file_bytes)
-            temp_path = temp_file.name
-
         try:
-            try:
-                result = self.md.convert(temp_path)
-                text_content = result.text_content
-            except Exception as e:
-                # Handle specific markitdown conversion errors
-                error_msg = str(e)
-                if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
-                    raise Exception(
-                        "File conversion failed: markitdown is missing DOCX support. "
-                        "Please install with: pip install 'markitdown[all]==0.1.2' or contact system administrator."
-                    ) from e
-                elif "docx" in error_msg.lower():
-                    raise Exception(
-                        f"DOCX file processing failed: {error_msg}. "
-                        "Please ensure the file is a valid DOCX document."
-                    ) from e
-                else:
-                    raise Exception(f"File conversion failed: {error_msg}") from e
-            
-            resume_id = await self._store_resume_in_db(text_content, content_type)
+            text_content = self._extract_text_from_file(file_bytes, file_type)
+        except Exception as e:
+            raise Exception(f"File conversion failed: {str(e)}") from e
 
-            await self._extract_and_store_structured_resume(
-                resume_id=resume_id, resume_text=text_content
-            )
+        resume_id = await self._store_resume_in_db(text_content, content_type)
 
-            return resume_id
-        finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+        await self._extract_and_store_structured_resume(
+            resume_id=resume_id, resume_text=text_content
+        )
 
-    def _get_file_extension(self, file_type: str) -> str:
-        """Returns the appropriate file extension based on MIME type"""
+        return resume_id
+
+    def _extract_text_from_file(self, file_bytes: bytes, file_type: str) -> str:
         if file_type == "application/pdf":
-            return ".pdf"
-        elif (
-            file_type
-            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ):
-            return ".docx"
-        return ""
+            text = extract_text(io.BytesIO(file_bytes))
+        elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            text = self._extract_docx_text(file_bytes)
+        else:
+            raise ValueError("Unsupported file type")
+
+        text = text.strip()
+        if not text:
+            raise ValueError("No text could be extracted from the uploaded file")
+        return text
+
+    def _extract_docx_text(self, file_bytes: bytes) -> str:
+        try:
+            with zipfile.ZipFile(io.BytesIO(file_bytes)) as docx:
+                document_xml = docx.read("word/document.xml")
+        except KeyError as e:
+            raise ValueError("Invalid DOCX file: missing word/document.xml") from e
+        except zipfile.BadZipFile as e:
+            raise ValueError("Invalid DOCX file") from e
+
+        root = ET.fromstring(document_xml)
+        paragraphs = []
+        namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        for paragraph in root.iter(f"{namespace}p"):
+            texts = [node.text for node in paragraph.iter(f"{namespace}t") if node.text]
+            if texts:
+                paragraphs.append("".join(texts))
+        return "\n".join(paragraphs)
 
     async def _store_resume_in_db(self, text_content: str, content_type: str):
         """

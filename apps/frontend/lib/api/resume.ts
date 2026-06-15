@@ -1,6 +1,5 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+import { API_URL } from './config';
 
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(

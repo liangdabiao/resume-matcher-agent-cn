@@ -5,7 +5,6 @@ import { improveResume } from '@/lib/api/resume';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 
 interface Job {
-	// Assuming id might be optional or not returned by analysis for a single display
 	id?: number;
 	title: string;
 	company: string;
@@ -15,7 +14,6 @@ interface Job {
 	responsibilities: string[];
 }
 
-// Type for the data expected from the analysis backend
 type AnalyzedJobData = Pick<Job, 'title' | 'company' | 'location' | 'jobId' | 'requirements' | 'responsibilities'> & {
 	job_summary?: string;
 	key_responsibilities?: string[];
@@ -31,7 +29,6 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 	const [analyzedJob, setAnalyzedJob] = useState<AnalyzedJobData | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = useState(false);
 	const [isImproving, setIsImproving] = useState(false);
-	const [initialJob, setInitialJob] = useState<AnalyzedJobData | null>(null);
 	const [loadingInitialJob, setLoadingInitialJob] = useState(true);
 	// Optional: add error state for analysis failures
 	// const [error, setError] = useState<string | null>(null);
@@ -42,14 +39,12 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 			if (improvedData?.data?.job_id) {
 				try {
 					setLoadingInitialJob(true);
-					// Get the processed job data
-					const jobData = await getJob(improvedData.data.job_id);
+						const jobData = await getJob(improvedData.data.job_id);
 					
-					// Extract relevant information from the processed job
-					const initialJobData: AnalyzedJobData = {
-						title: jobData.processed_job?.job_title || 'Unknown Position',
-						company: jobData.processed_job?.company_profile?.company_name || 'Unknown Company',
-						location: jobData.processed_job?.location?.city || 'Unknown Location',
+						const initialJobData: AnalyzedJobData = {
+						title: jobData.processed_job?.job_title || '未知岗位',
+						company: jobData.processed_job?.company_profile?.company_name || '未知公司',
+						location: jobData.processed_job?.location?.city || '未知地点',
 						requirements: jobData.processed_job?.job_requirements?.split('\n').filter(Boolean) || [],
 						responsibilities: jobData.processed_job?.job_responsibilities?.split('\n').filter(Boolean) || [],
 						job_summary: jobData.processed_job?.job_summary || '',
@@ -57,7 +52,6 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 						jobId: improvedData.data.job_id
 					};
 					
-					setInitialJob(initialJobData);
 					setAnalyzedJob(initialJobData);
 				} catch (err) {
 					console.error('Error loading initial job:', err);
@@ -91,9 +85,9 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 			
 			// Extract relevant information from the processed job
 			const analyzedData: AnalyzedJobData = {
-				title: jobData.processed_job?.job_title || 'Unknown Position',
-				company: jobData.processed_job?.company_profile?.company_name || 'Unknown Company',
-				location: jobData.processed_job?.location?.city || 'Unknown Location',
+				title: jobData.processed_job?.job_title || '未知岗位',
+				company: jobData.processed_job?.company_profile?.company_name || '未知公司',
+				location: jobData.processed_job?.location?.city || '未知地点',
 				requirements: jobData.processed_job?.job_requirements?.split('\n').filter(Boolean) || [],
 				responsibilities: jobData.processed_job?.job_responsibilities?.split('\n').filter(Boolean) || [],
 				job_summary: jobData.processed_job?.job_summary || '',
@@ -131,10 +125,10 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 			// Update the resume preview context with the improved data
 			setImprovedData(improvedResult);
 			// Show a success message
-			alert('Resume has been successfully improved!');
+			alert('简历已成功优化！');
 		} catch (err) {
 			console.error('Error improving resume:', err);
-			alert('Failed to improve resume. Please try again.');
+			alert('简历优化失败，请稍后重试。');
 		} finally {
 			setIsImproving(false);
 		}
@@ -144,20 +138,19 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 
 	return (
 		<div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-lg shadow-xl border border-gray-800/50">
-			<h2 className="text-2xl font-bold text-white mb-1">Job Analyzer</h2>
+			<h2 className="text-2xl font-bold text-white mb-1">岗位分析</h2>
 			<p className="text-gray-400 mb-6 text-sm">
 				{analyzedJob
-					? 'Analyzed job details below.'
-					: 'Upload a job description to analyze its key details.'}
+					? '岗位解析结果如下。'
+					: '上传岗位描述后，系统会提取关键要求。'}
 			</p>
 			{loadingInitialJob ? (
 				<div className="text-center text-gray-400 py-8">
-					<p>Loading job details...</p>
+					<p>正在加载岗位详情...</p>
 				</div>
 			) : isAnalyzing ? (
 				<div className="text-center text-gray-400 py-8">
-					<p>Analyzing job description...</p>
-					{/* Optional: Add a spinner here */}
+					<p>正在分析岗位描述...</p>
 				</div>
 			) : analyzedJob ? (
 				<div className="space-y-4">
@@ -169,46 +162,45 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 						<p className="text-sm text-gray-300">{analyzedJob.company}</p>
 						<p className="text-xs text-gray-400 mt-1">{analyzedJob.location}</p>
 						
-						{/* Job Summary */}
+						{/* 岗位概述 */}
 						{analyzedJob.job_summary && (
 							<div className="mt-3">
-								<h4 className="text-sm font-medium text-gray-200 mb-1">Job Summary</h4>
+								<h4 className="text-sm font-medium text-gray-200 mb-1">岗位概述</h4>
 								<p className="text-xs text-gray-400">{analyzedJob.job_summary}</p>
 							</div>
 						)}
 						
-						{/* Job Requirements */}
 						{analyzedJob.requirements && analyzedJob.requirements.length > 0 && (
 							<div className="mt-3">
-								<h4 className="text-sm font-medium text-gray-200 mb-1">Requirements</h4>
+								<h4 className="text-sm font-medium text-gray-200 mb-1">岗位要求</h4>
 								<ul className="text-xs text-gray-400 list-disc list-inside space-y-1">
 									{analyzedJob.requirements.slice(0, 3).map((req, index) => (
 										<li key={index}>{req}</li>
 									))}
 									{analyzedJob.requirements.length > 3 && (
-										<li className="italic">+ {analyzedJob.requirements.length - 3} more requirements</li>
+										<li className="italic">还有 {analyzedJob.requirements.length - 3} 条要求</li>
 									)}
 								</ul>
 							</div>
 						)}
 						
-						{/* Key Responsibilities */}
+						{/* 核心职责 */}
 						{(analyzedJob.key_responsibilities && analyzedJob.key_responsibilities.length > 0) ? (
 							<div className="mt-3">
-								<h4 className="text-sm font-medium text-gray-200 mb-1">Key Responsibilities</h4>
+								<h4 className="text-sm font-medium text-gray-200 mb-1">核心职责</h4>
 								<ul className="text-xs text-gray-400 list-disc list-inside space-y-1">
 									{analyzedJob.key_responsibilities.slice(0, 5).map((resp, index) => (
 										<li key={index}>{resp}</li>
 									))}
 									{analyzedJob.key_responsibilities.length > 5 && (
-										<li className="italic">+ {analyzedJob.key_responsibilities.length - 5} more responsibilities</li>
+										<li className="italic">还有 {analyzedJob.key_responsibilities.length - 5} 条职责</li>
 									)}
 								</ul>
 							</div>
 						) : (
 							<div className="mt-3">
-								<h4 className="text-sm font-medium text-gray-200 mb-1">Key Responsibilities</h4>
-								<p className="text-xs text-gray-400">No key responsibilities specified.</p>
+								<h4 className="text-sm font-medium text-gray-200 mb-1">核心职责</h4>
+								<p className="text-xs text-gray-400">暂未提取到核心职责。</p>
 							</div>
 						)}
 					</div>
@@ -217,36 +209,33 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 								onClick={handleOpenModal}
 								className="w-full text-center block bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-md transition-colors duration-200 text-sm"
 							>
-								Analyze Another Job Description
+								分析另一个岗位
 							</button>
 							{isImproving ? (
 								<div className="w-full text-center py-2.5 px-4 rounded-md text-gray-400 text-sm">
-									Improving resume...
+									正在优化简历...
 								</div>
 							) : (
 								<button
 									onClick={handleImproveResume}
 									className="w-full text-center block bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-md transition-colors duration-200 text-sm"
 								>
-									Improve Resume
+									优化简历
 								</button>
 							)}
 						</div>
 				</div>
 			) : (
 				<div className="text-center text-gray-400 py-8 flex flex-col justify-center items-center">
-					{/* Optional: Display error message here if setError is implemented */}
-					{/* {error && <p className="text-red-400 mb-3">{error}</p>} */}
-					<p className="mb-3">No job description analyzed yet.</p>
+					<p className="mb-3">暂未分析岗位描述。</p>
 					<button
 						onClick={handleOpenModal}
 						className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 text-sm"
 					>
-						Upload Job Description
+						上传岗位描述
 					</button>
 				</div>
 			)}
-			{/* Removed the always-visible bottom button as its functionality is covered */}
 			{isModalOpen && (
 				<PasteJobDescription
 					onClose={handleCloseModal}

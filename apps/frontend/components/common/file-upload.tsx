@@ -13,6 +13,7 @@ import {
 // For this refinement, direct property access after casting to FileMetadata is used.
 import { formatBytes, useFileUpload, FileMetadata } from '@/hooks/use-file-upload';
 import { Button } from '@/components/ui/button';
+import { API_URL } from '@/lib/api/config';
 
 const acceptedFileTypes = [
 	'application/pdf', // .pdf
@@ -20,7 +21,7 @@ const acceptedFileTypes = [
 ];
 
 const acceptString = acceptedFileTypes.join(',');
-const API_RESUME_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/resumes/upload`; // API endpoint
+const API_RESUME_UPLOAD_URL = `${API_URL}/api/v1/resumes/upload`;
 
 export default function FileUpload() {
 	const maxSize = 2 * 1024 * 1024; // 2MB
@@ -58,14 +59,14 @@ export default function FileUpload() {
 				console.error('Missing resume_id in upload response', response)
 				setUploadFeedback({
 					type: 'error',
-					message: 'Upload succeeded but no resume ID received.',
+					message: '上传成功，但后端没有返回简历 ID。',
 				})
 				return
 			}
 
 			setUploadFeedback({
 				type: 'success',
-				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
+				message: `${(uploadedFile.file as FileMetadata).name} 上传成功！`,
 			});
 			clearErrors();
 			const encodedResumeId = encodeURIComponent(resumeId);
@@ -75,7 +76,7 @@ export default function FileUpload() {
 			console.error('Upload error:', file, errorMsg);
 			setUploadFeedback({
 				type: 'error',
-				message: errorMsg || 'An unknown error occurred during upload.',
+				message: errorMsg || '上传过程中发生未知错误。',
 			});
 		},
 		onFilesChange: (currentFiles) => {
@@ -122,8 +123,8 @@ export default function FileUpload() {
 				aria-disabled={Boolean(currentFile) || isUploadingGlobal}
 				aria-label={
 					currentFile
-						? 'File selected. Remove to upload another.'
-						: 'File upload dropzone. Drag & drop or click to browse.'
+						? '已选择文件。移除后可重新上传。'
+						: '简历上传区域。拖拽文件到此处，或点击选择文件。'
 				}
 			>
 				<div className="flex min-h-48 w-full flex-col items-center justify-center p-6 text-center">
@@ -131,9 +132,9 @@ export default function FileUpload() {
 					{isUploadingGlobal ? (
 						<>
 							<Loader2Icon className="mb-4 size-10 animate-spin text-primary" />
-							<p className="text-lg font-semibold text-white">Uploading...</p>
+							<p className="text-lg font-semibold text-white">上传中...</p>
 							<p className="text-sm text-muted-foreground">
-								Your file is being processed.
+								正在解析并处理你的简历。
 							</p>
 						</>
 					) : (
@@ -142,14 +143,14 @@ export default function FileUpload() {
 								<UploadIcon className="size-6" />
 							</div>
 							<p className="mb-1 text-lg font-semibold text-white">
-								{currentFile ? 'File Ready' : 'Upload Your Resume'}
+								{currentFile ? '文件已就绪' : '上传你的简历'}
 							</p>
 							<p className="text-sm text-muted-foreground">
 								{currentFile
-									? currentFile.file.name // name is on both File and FileMetadata
-									: `Drag & drop or click (PDF, DOCX up to ${formatBytes(
+									? currentFile.file.name
+									: `拖拽或点击上传（PDF、DOCX，最大 ${formatBytes(
 										maxSize,
-									)})`}
+									)}）`}
 							</p>
 						</>
 					)}
@@ -166,7 +167,7 @@ export default function FileUpload() {
 						<div className="flex items-start gap-2">
 							<AlertCircleIcon className="mt-0.5 size-5 shrink-0" />
 							<div>
-								<p className="font-semibold">Error</p>
+								<p className="font-semibold">错误</p>
 								{displayErrors.map((error, index) => (
 									<p key={index}>{error}</p>
 								))}
@@ -183,7 +184,7 @@ export default function FileUpload() {
 					<div className="flex items-start gap-2">
 						<CheckCircle2Icon className="mt-0.5 size-5 shrink-0" />
 						<div>
-							<p className="font-semibold">Success</p>
+							<p className="font-semibold">成功</p>
 							<p>{uploadFeedback.message}</p>
 						</div>
 					</div>
@@ -205,10 +206,10 @@ export default function FileUpload() {
 									{/* size is on both File and FileMetadata */}
 									{/* After upload attempt, .file is FileMetadata */}
 									{(currentFile.file as FileMetadata).uploaded === true
-										? 'Uploaded'
+										? '已上传'
 										: (currentFile.file as FileMetadata).uploadError
-											? 'Upload failed'
-											: 'Pending upload'}
+											? '上传失败'
+											: '等待上传'}
 								</p>
 							</div>
 						</div>
@@ -217,7 +218,7 @@ export default function FileUpload() {
 							variant="ghost"
 							className="size-8 shrink-0 text-muted-foreground hover:text-white"
 							onClick={() => handleRemoveFile(currentFile.id)}
-							aria-label="Remove file"
+							aria-label="移除文件"
 							disabled={isUploadingGlobal}
 						>
 							<XIcon className="size-5" />
@@ -226,7 +227,7 @@ export default function FileUpload() {
 					{/* Display uploadError if it exists on FileMetadata */}
 					{(currentFile.file as FileMetadata).uploadError && (
 						<p className="mt-2 text-xs text-destructive">
-							Error: {(currentFile.file as FileMetadata).uploadError}
+							错误：{(currentFile.file as FileMetadata).uploadError}
 						</p>
 					)}
 				</div>

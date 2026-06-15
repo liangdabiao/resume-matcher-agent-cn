@@ -50,7 +50,7 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 		// Ensure website, linkedin, github links start with https:// if not already present
 		let finalHrefPrefix = hrefPrefix;
 		if (
-			['Website', 'LinkedIn', 'GitHub'].includes(label) &&
+			['网站', 'LinkedIn', 'GitHub'].includes(label) &&
 			!value.startsWith('http') &&
 			!value.startsWith('//')
 		) {
@@ -96,10 +96,10 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 						<h2 className="text-xl text-gray-400 mb-4">{personalInfo.title}</h2>
 					)}
 					<div className="grid grid-cols-3 gap-1 text-left px-2">
-						{renderContactDetail('Email', personalInfo.email, 'mailto:')}
-						{renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-						{renderContactDetail('Location', personalInfo.location)}
-						{renderContactDetail('Website', personalInfo.website)}
+						{renderContactDetail('邮箱', personalInfo.email, 'mailto:')}
+						{renderContactDetail('电话', personalInfo.phone, 'tel:')}
+						{renderContactDetail('所在地', personalInfo.location)}
+						{renderContactDetail('网站', personalInfo.website)}
 						{renderContactDetail('LinkedIn', personalInfo.linkedin)}
 						{renderContactDetail('GitHub', personalInfo.github)}
 					</div>

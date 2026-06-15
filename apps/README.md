@@ -15,7 +15,7 @@
 - **AI驱动的洞察**：根据职位要求获取改进建议
 - **关键词匹配**：识别对ATS（申请人跟踪系统）重要的缺失关键词
 - **结构化数据提取**：将非结构化的简历和职位数据转换为结构化JSON格式
-- **本地AI处理**：使用OpenAI等大模型进行分析，或者使用Ollama进行本地AI模型服务以确保数据隐私
+- **智谱AI处理**：通过OpenAI兼容协议调用智谱大模型进行结构化抽取和简历分析
 
 ## 技术栈
 
@@ -24,7 +24,7 @@
 | Python | 3.12+ |
 | FastAPI | 0.115.12 |
 | Next.js | 15+ |
-| Ollama | 0.6.7 |
+| 智谱 OpenAI 兼容 API | GLM-5.1 / embedding-3 |
 | SQLite | 3.x |
 | Tailwind CSS | 4.x |
 
@@ -45,9 +45,9 @@
 后端基于FastAPI构建，需要以下关键依赖：
 - FastAPI作为Web框架
 - SQLAlchemy作为数据库ORM
-- Ollama用于本地AI模型服务
-- MarkItDown用于文档处理（PDF/DOCX转文本）
-- 各种AI库用于处理和分析
+- OpenAI SDK用于调用智谱OpenAI兼容API
+- pdfminer.six用于PDF文本提取
+- Python标准库用于DOCX文本提取
 
 ### 前端依赖
 
@@ -64,7 +64,7 @@
 ```
 backend/
 ├── app/
-│   ├── agent/          # AI模型集成（Ollama, OpenAI, LlamaIndex）
+│   ├── agent/          # 智谱OpenAI兼容API集成
 │   ├── api/            # REST API路由和中间件
 │   ├── core/           # 配置、数据库设置、日志
 │   ├── models/         # 数据库模型（SQLAlchemy）
@@ -109,19 +109,17 @@ frontend/
 
 ```env
 SESSION_SECRET_KEY="your-secret-key"
-SYNC_DATABASE_URL="sqlite:///./Data/app.db"
-ASYNC_DATABASE_URL="sqlite+aiosqlite:///./Data/app.db"
+SYNC_DATABASE_URL="sqlite:///./app.db"
+ASYNC_DATABASE_URL="sqlite+aiosqlite:///./app.db"
 PYTHONDONTWRITEBYTECODE=1
 
-LLM_PROVIDER="ollama"
-LLM_API_KEY=""  # Ollama不需要
-LLM_BASE_URL=""  # Ollama不需要
-LL_MODEL="gemma3:4b"
+LLM_API_KEY="your-zhipu-api-key"
+LLM_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
+LL_MODEL="glm-5.1"
 
-EMBEDDING_PROVIDER="ollama"
-EMBEDDING_API_KEY=""  # Ollama不需要
-EMBEDDING_BASE_URL=""  # Ollama不需要
-EMBEDDING_MODEL="dengcao/Qwen3-Embedding-0.6B:Q8_0"
+EMBEDDING_API_KEY="your-zhipu-api-key"
+EMBEDDING_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
+EMBEDDING_MODEL="embedding-3"
 ```
 
 ## 运行方法
@@ -179,10 +177,9 @@ EMBEDDING_MODEL="dengcao/Qwen3-Embedding-0.6B:Q8_0"
 
 ## AI集成
 
-应用程序支持多个AI提供商：
-- **Ollama** - 用于本地AI模型服务
-- **OpenAI**（默认）- 用于基于云的AI处理
-- **LlamaIndex** - 用于额外的AI提供商支持
+应用程序通过OpenAI兼容协议调用智谱API，默认使用：
+- **LLM**：GLM-5.1
+- **Embedding**：embedding-3
 
 AI处理包括：
 1. 将简历和职位描述转换为结构化JSON格式

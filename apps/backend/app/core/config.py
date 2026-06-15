@@ -15,17 +15,15 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
-    SYNC_DATABASE_URL: Optional[str] = None
-    ASYNC_DATABASE_URL: Optional[str] = None
+    SYNC_DATABASE_URL: str = "sqlite:///./app.db"
+    ASYNC_DATABASE_URL: str = "sqlite+aiosqlite:///./app.db"
     SESSION_SECRET_KEY: Optional[str] = None
-    LLM_PROVIDER: Optional[str] = "ollama"
     LLM_API_KEY: Optional[str] = None
-    LLM_BASE_URL: Optional[str] = None
-    LL_MODEL: Optional[str] = "gemma3:4b"
-    EMBEDDING_PROVIDER: Optional[str] = "ollama"
+    LLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
+    LL_MODEL: str = "glm-5.1"
     EMBEDDING_API_KEY: Optional[str] = None
-    EMBEDDING_BASE_URL: Optional[str] = None
-    EMBEDDING_MODEL: Optional[str] = "dengcao/Qwen3-Embedding-0.6B:Q8_0"
+    EMBEDDING_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
+    EMBEDDING_MODEL: str = "embedding-3"
     LOG_DIR: str = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "logs")
     # 添加ENV属性，默认使用local环境
     ENV: Literal["production", "staging", "local"] = "local"

@@ -1,16 +1,17 @@
-import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 from ..core import settings
 from .strategies.wrapper import JSONWrapper, MDWrapper
 from .providers.base import Provider, EmbeddingProvider
+from .providers.openai import OpenAIProvider, OpenAIEmbeddingProvider
+
 
 class AgentManager:
-    def __init__(self,
-                 strategy: str | None = None,
-                 model: str = settings.LL_MODEL,
-                 model_provider: str = settings.LLM_PROVIDER
-                 ) -> None:
+    def __init__(
+        self,
+        strategy: str | None = None,
+        model: str = settings.LL_MODEL,
+    ) -> None:
         match strategy:
             case "md":
                 self.strategy = MDWrapper()
@@ -19,80 +20,41 @@ class AgentManager:
             case _:
                 self.strategy = JSONWrapper()
         self.model = model
-        self.model_provider = model_provider
 
     async def _get_provider(self, **kwargs: Any) -> Provider:
-        # Default options for any LLM. Not all can handle them
-        # (e.g. OpenAI doesn't take top_k) but each provider can make
-        # best effort.
         opts = {
-            "temperature": 0,
-            "top_p": 0.9,
-            "top_k": 40,
-            "num_ctx": 20000
+            "temperature": kwargs.get("temperature", 0),
+            "top_p": kwargs.get("top_p", 0.9),
         }
-        opts.update(kwargs)
-        match self.model_provider:
-            case 'openai':
-                from .providers.openai import OpenAIProvider
-                api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
-                base_url = opts.get("llm_base_url", settings.LLM_BASE_URL)
-                return OpenAIProvider(model_name=self.model,
-                                      api_key=api_key,
-                                      base_url=base_url,
-                                      opts=opts)
-            case 'ollama':
-                from .providers.ollama import OllamaProvider
-                model = opts.get("model", self.model)
-                return OllamaProvider(model_name=model,
-                                      opts=opts)
-            case _:
-                from .providers.llama_index import LlamaIndexProvider
-                llm_api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
-                llm_api_base_url = opts.get("llm_base_url", settings.LLM_BASE_URL)
-                return LlamaIndexProvider(api_key=llm_api_key,
-                                          model_name=self.model,
-                                          api_base_url=llm_api_base_url,
-                                          provider=self.model_provider,
-                                          opts=opts)
+        api_key = kwargs.get("llm_api_key", settings.LLM_API_KEY)
+        base_url = kwargs.get("llm_base_url", settings.LLM_BASE_URL)
+        model = kwargs.get("model", self.model)
+        return OpenAIProvider(
+            model_name=model,
+            api_key=api_key,
+            base_url=base_url,
+            opts=opts,
+        )
 
     async def run(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
-        """
-        Run the agent with the given prompt and generation arguments.
-        """
         provider = await self._get_provider(**kwargs)
         return await self.strategy(prompt, provider, **kwargs)
 
-class EmbeddingManager:
-    def __init__(self,
-                 model: str = settings.EMBEDDING_MODEL,
-                 model_provider: str = settings.EMBEDDING_PROVIDER) -> None:
-        self._model = model
-        self._model_provider = model_provider
 
-    async def _get_embedding_provider(
-        self, **kwargs: Any
-    ) -> EmbeddingProvider:
-        match self._model_provider:
-            case 'openai':
-                from .providers.openai import OpenAIEmbeddingProvider
-                api_key = kwargs.get("openai_api_key", settings.EMBEDDING_API_KEY)
-                base_url = kwargs.get("embedding_base_url", settings.EMBEDDING_BASE_URL)
-                return OpenAIEmbeddingProvider(api_key=api_key, embedding_model=self._model, base_url=base_url)
-            case 'ollama':
-                from .providers.ollama import OllamaEmbeddingProvider
-                model = kwargs.get("embedding_model", self._model)
-                return OllamaEmbeddingProvider(embedding_model=model)
-            case _:
-                from .providers.llama_index import LlamaIndexEmbeddingProvider
-                embed_api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY)
-                return LlamaIndexEmbeddingProvider(api_key=embed_api_key,
-                                                   provider=self._model_provider,
-                                                   embedding_model=self._model)
+class EmbeddingManager:
+    def __init__(self, model: str = settings.EMBEDDING_MODEL) -> None:
+        self._model = model
+
+    async def _get_embedding_provider(self, **kwargs: Any) -> EmbeddingProvider:
+        api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY or settings.LLM_API_KEY)
+        base_url = kwargs.get("embedding_base_url", settings.EMBEDDING_BASE_URL)
+        model = kwargs.get("embedding_model", self._model)
+        return OpenAIEmbeddingProvider(
+            api_key=api_key,
+            embedding_model=model,
+            base_url=base_url,
+        )
 
     async def embed(self, text: str, **kwargs: Any) -> list[float]:
-        """
-        Get the embedding for the given text.
-        """
         provider = await self._get_embedding_provider(**kwargs)
         return await provider.embed(text)

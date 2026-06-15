@@ -35,11 +35,11 @@ export default function JobDescriptionUploadTextArea() {
 			e.preventDefault();
 			const trimmed = text.trim();
 			if (!trimmed) {
-				setFlash({ type: 'error', message: 'Job description cannot be empty.' });
+				setFlash({ type: 'error', message: '岗位描述不能为空。' });
 				return;
 			}
 			if (!resumeId) {
-				setFlash({ type: 'error', message: 'Missing resume ID.' });
+				setFlash({ type: 'error', message: '缺少简历 ID，请重新上传简历。' });
 				return;
 			}
 
@@ -48,7 +48,7 @@ export default function JobDescriptionUploadTextArea() {
 				const id = await uploadJobDescriptions([trimmed], resumeId);
 				setJobId(id);
 				setSubmissionStatus('success');
-				setFlash({ type: 'success', message: 'Job description submitted successfully!' });
+				setFlash({ type: 'success', message: '岗位描述提交成功！' });
 			} catch (err) {
 				console.error(err);
 				setSubmissionStatus('error');
@@ -94,7 +94,7 @@ export default function JobDescriptionUploadTextArea() {
 					htmlFor="jobDescription"
 					className="bg-zinc-950/80 text-white absolute start-1 top-0 z-10 block -translate-y-1/2 px-2 text-xs font-medium group-has-disabled:opacity-50"
 				>
-					Job Description <span className="text-red-500">*</span>
+					岗位描述 <span className="text-red-500">*</span>
 				</label>
 				<Textarea
 					id="jobDescription"
@@ -103,7 +103,7 @@ export default function JobDescriptionUploadTextArea() {
 					onChange={handleChange}
 					required
 					aria-required="true"
-					placeholder="Paste the job description here..."
+					placeholder="请粘贴岗位描述..."
 					className="w-full bg-gray-800/30 focus:ring-1 border rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/50 border-gray-300 min-h-[300px]"
 				/>
 			</div>
@@ -134,12 +134,12 @@ export default function JobDescriptionUploadTextArea() {
 									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 								/>
 							</svg>
-							<span>Submitting...</span>
+							<span>提交中...</span>
 						</>
 					) : submissionStatus === 'success' ? (
-						<span>Submitted!</span>
+						<span>已提交</span>
 					) : (
-						<span>Next</span>
+						<span>下一步</span>
 					)}
 				</Button>
 			</div>
@@ -151,7 +151,7 @@ export default function JobDescriptionUploadTextArea() {
 						disabled={improvementStatus === 'improving'}
 						className="font-semibold py-2 px-6 rounded min-w-[90px] bg-green-600 hover:bg-green-700 text-white"
 					>
-						{improvementStatus === 'improving' ? 'Improving...' : 'Improve'}
+						{improvementStatus === 'improving' ? '正在分析...' : '开始优化'}
 					</Button>
 				</div>
 			)}

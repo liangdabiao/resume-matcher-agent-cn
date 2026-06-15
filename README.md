@@ -1,204 +1,192 @@
-# 简历匹配器
+# 简历匹配智能体
 
-"简历匹配器"是一个AI驱动的平台，旨在逆向工程招聘算法，向您展示如何精准定制简历。获取那些能让你通过初步筛选、进入人工审阅阶段的关键词、格式和洞察。意思就是模拟HR怎样筛选你的简历，提前给你展示筛选的结论，方便你尽快修改好你的简历，以增加通过的可能性。
+简历匹配智能体是一个面向中文用户的 AI 简历深度优化工具。你上传简历并粘贴目标岗位 JD 后，系统会解析简历与岗位要求，生成岗位匹配分析、HR 视角审计报告和可执行的简历修改建议。
 
-## 项目介绍
-
-简历匹配器旨在通过分析职位描述并提供有针对性的改进建议，帮助求职者优化简历。该平台使用AI模型从简历和职位发布中提取关键信息，然后提供可操作的见解，以增加通过自动筛选系统的机会。
-
-该应用程序由处理数据处理和AI集成的FastAPI后端，以及提供用户友好界面（操作非常简单）的Next.js前端组成，用于上传简历和职位描述。
+本项目保留 SQLite 作为轻量本地状态存储，用于保存简历、岗位描述、结构化解析结果和流程 ID。SQLite 不需要单独部署数据库服务，适合本地使用、演示和轻量部署。
 
 ## 核心功能
 
-- **简历分析**：上传PDF或DOCX格式的简历进行分析
-- **职位描述解析**：处理职位描述以提取关键要求和关键词
-- **AI驱动的洞察**：根据职位要求获取改进建议
-- **关键词匹配**：识别对ATS（申请人跟踪系统）重要的缺失关键词
-- **结构化数据提取**：将非结构化的简历和职位数据转换为结构化JSON格式
-- **本地AI处理**：使用OpenAI等大模型进行分析，或者使用Ollama进行本地AI模型服务以确保数据隐私
+- 上传 PDF / DOCX 简历并提取文本
+- 粘贴岗位 JD 并解析岗位职责、要求和关键词
+- 使用智谱 OpenAI 兼容 API 进行结构化抽取与简历审计
+- 生成中文 HR 视角的深度简历分析报告
+- 根据岗位要求输出简历优化方向和示例改写
+- 前端界面已中文化，适合中文求职场景
 
 ## 技术栈
 
-| 技术 | 版本/信息 |
-|------------|--------------|
-| Python | 3.12+ |
-| FastAPI | 0.115.12 |
-| Next.js | 15+ |
-| Ollama | 0.6.7 |
-| SQLite | 3.x |
-| Tailwind CSS | 4.x |
+| 模块 | 技术 |
+| --- | --- |
+| 前端 | Next.js 15、React 19、TypeScript、Tailwind CSS |
+| 后端 | FastAPI、Pydantic、SQLAlchemy、aiosqlite |
+| 数据库 | SQLite |
+| AI 接入 | 智谱 OpenAI 兼容 API |
+| 默认模型 | `glm-5.1` |
+| 默认 Embedding | `embedding-3` |
+| 文档解析 | `pdfminer.six` 解析 PDF，标准库解析 DOCX |
 
-## 安装方法
- 
- backend python项目：
-```bash
-   pip install -r requirements.txt
- ```
+## 目录结构
 
- frontend react项目：
- npm install
- npm run dev
-
-
-### 后端依赖
-
-后端基于FastAPI构建，需要以下关键依赖：
-- FastAPI作为Web框架
-- SQLAlchemy作为数据库ORM
-- Ollama用于本地AI模型服务
-- MarkItDown用于文档处理（PDF/DOCX转文本）
-- 各种AI库用于处理和分析
-
-### 前端依赖
-
-前端基于Next.js构建，使用：
-- React 19
-- Tailwind CSS用于样式设计
-- Radix UI组件用于可访问的UI元素
-- TypeScript用于类型安全
-
-## 项目结构
-
-### 后端 (`/backend`)
-
+```text
+.
+├── apps/
+│   ├── backend/              # FastAPI 后端
+│   │   ├── app/
+│   │   │   ├── agent/        # 智谱 OpenAI 兼容调用封装
+│   │   │   ├── api/          # API 路由
+│   │   │   ├── core/         # 配置、数据库、日志
+│   │   │   ├── models/       # SQLAlchemy 数据模型
+│   │   │   ├── prompt/       # 提示词模板
+│   │   │   ├── schemas/      # Pydantic / JSON Schema
+│   │   │   └── services/     # 简历、岗位、评分与优化逻辑
+│   │   ├── .env.sample       # 后端环境变量示例
+│   │   ├── requirements.txt
+│   │   └── pyproject.toml
+│   └── frontend/             # Next.js 前端
+│       ├── app/              # 页面路由
+│       ├── components/       # UI 与业务组件
+│       ├── lib/api/          # 前端 API 客户端
+│       └── .env.sample       # 前端环境变量示例
+├── docs/
+├── setup.sh
+├── setup.ps1
+└── package.json
 ```
-backend/
-├── app/
-│   ├── agent/          # AI模型集成（Ollama, OpenAI, LlamaIndex）
-│   ├── api/            # REST API路由和中间件
-│   ├── core/           # 配置、数据库设置、日志
-│   ├── models/         # 数据库模型（SQLAlchemy）
-│   ├── prompt/         # AI提示模板
-│   ├── schemas/        # 数据验证模式（Pydantic）
-│   ├── services/       # 业务逻辑实现
-│   ├── base.py         # FastAPI应用配置
-│   └── main.py         # 应用程序入口点
-├── Data/               # SQLite数据库文件
-├── logs/               # 应用程序日志文件
-├── requirements.txt    # Python依赖
-└── .env                # 环境配置
-```
-
-### 前端 (`/frontend`)
-
-```
-frontend/
-├── app/                # Next.js页面和布局
-├── components/         # React组件
-├── lib/                # 实用函数和API客户端
-├── public/             # 静态资源
-├── package.json        # Node.js依赖
-└── tailwind.config.js  # Tailwind CSS配置
-```
-
-## API端点
-
-### 职位端点 (`/api/v1/job`)
-
-- `POST /upload` - 上传并处理职位描述
-- `GET /` - 根据职位ID检索职位数据
-
-### 简历端点 (`/api/v1/resume`)
-
-- `POST /upload` - 上传并处理简历（PDF/DOCX）
-- `POST /improve` - 根据职位描述获取简历改进建议
 
 ## 环境配置
 
-在后端目录中创建一个`.env`文件，包含以下变量：
+### 后端环境变量
 
-```env
-SESSION_SECRET_KEY="your-secret-key"
-SYNC_DATABASE_URL="sqlite:///./Data/app.db"
-ASYNC_DATABASE_URL="sqlite+aiosqlite:///./Data/app.db"
-PYTHONDONTWRITEBYTECODE=1
+复制示例文件：
 
-LLM_PROVIDER="ollama"
-LLM_API_KEY=""  # Ollama不需要
-LLM_BASE_URL=""  # Ollama不需要
-LL_MODEL="gemma3:4b"
-
-EMBEDDING_PROVIDER="ollama"
-EMBEDDING_API_KEY=""  # Ollama不需要
-EMBEDDING_BASE_URL=""  # Ollama不需要
-EMBEDDING_MODEL="dengcao/Qwen3-Embedding-0.6B:Q8_0"
+```bash
+cp apps/backend/.env.sample apps/backend/.env
 ```
 
-## 运行方法
+然后填写智谱 API Key：
 
-### 后端
+```env
+SESSION_SECRET_KEY="change-me"
+SYNC_DATABASE_URL="sqlite:///./app.db"
+ASYNC_DATABASE_URL="sqlite+aiosqlite:///./app.db"
+PYTHONDONTWRITEBYTECODE=1
+ENV="local"
 
-1. 导航到后端目录：
-   ```bash
-   cd backend
-   ```
+LLM_API_KEY="your-zhipu-api-key"
+LLM_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
+LL_MODEL="glm-5.1"
 
-2. 安装Python依赖：
-   ```bash
-   pip install -r requirements.txt
-   ```
+EMBEDDING_API_KEY="your-zhipu-api-key"
+EMBEDDING_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
+EMBEDDING_MODEL="embedding-3"
+```
 
-3. 运行FastAPI服务器：
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+### 前端环境变量
 
-后端将在 `http://localhost:8000` 可用
+复制示例文件：
 
-### 前端
+```bash
+cp apps/frontend/.env.sample apps/frontend/.env
+```
 
-1. 导航到前端目录：
-   ```bash
-   cd frontend
-   ```
+默认后端地址：
 
-2. 安装Node.js依赖：
-   ```bash
-   npm install
-   # 或
-   yarn install
-   ```
+```env
+NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+```
 
-3. 运行Next.js开发服务器：
-   ```bash
-   npm run dev
-   # 或
-   yarn dev
-   ```
+## 安装依赖
 
-前端将在 `http://localhost:3000` 可用
+在项目根目录执行：
 
-## 数据库结构
+```bash
+npm run install
+```
 
-应用程序使用SQLite，包含以下关键表：
+也可以分别安装：
 
-- `resumes` - 存储原始简历内容
-- `processed_resumes` - 存储结构化简历数据
-- `jobs` - 存储原始职位描述内容
-- `processed_jobs` - 存储结构化职位数据
+```bash
+npm run install:backend
+npm run install:frontend
+```
 
-## AI集成
+## 本地运行
 
-应用程序支持多个AI提供商：
-- **Ollama** - 用于本地AI模型服务
-- **OpenAI**（默认）- 用于基于云的AI处理
-- **LlamaIndex** - 用于额外的AI提供商支持
+同时启动前后端：
 
-AI处理包括：
-1. 将简历和职位描述转换为结构化JSON格式
-2. 提取关键词和关键要求
-3. 根据职位要求提供改进建议
+```bash
+npm run dev
+```
 
-## 日志记录
+分别启动：
 
-应用程序使用Python内置的日志模块：
-- 开发时的控制台输出
-- 生产环境中的文件日志和轮转
-- 基于环境的不同日志级别（本地为DEBUG，生产为INFO）
+```bash
+npm run dev:backend
+npm run dev:frontend
+```
 
+默认地址：
 
-## 项目参考
+- 前端：`http://127.0.0.1:3000`
+- 后端：`http://127.0.0.1:8000`
 
-代码是fork自https://github.com/srbhr/Resume-Matcher ， 感谢原作者。我基于他的代码进行大量修改，基本上和原来项目的功能不一样，但是适合国内用户，主要功能就是帮忙深度修改简历。
+## 使用流程
 
-提示语的模板来自 ：【角色】洞察人心的面试官与资深HRBP (v2.0) ，不知道来源作者，是一个公众号大V写的，有知道来源请告知补充上。
+1. 打开前端页面
+2. 上传 PDF 或 DOCX 简历
+3. 页面跳转到岗位描述输入页
+4. 粘贴目标岗位 JD
+5. 点击“下一步”提交岗位描述
+6. 点击“开始优化”生成分析结果
+7. 在控制台查看岗位解析、简历审计报告和优化建议
+
+## API 概览
+
+### 简历接口
+
+- `POST /api/v1/resumes/upload`：上传并解析简历
+- `GET /api/v1/resumes?resume_id=...`：获取简历数据
+- `POST /api/v1/resumes/improve`：根据岗位描述生成简历分析与优化建议
+- `POST /api/v1/resumes/improve?stream=true`：流式返回分析过程
+
+### 岗位接口
+
+- `POST /api/v1/jobs/upload`：上传并解析岗位描述
+- `GET /api/v1/jobs?job_id=...`：获取岗位解析结果
+
+## 为什么保留 SQLite
+
+SQLite 在本项目中用于保存本地流程状态：
+
+- 上传后的 `resume_id`
+- 简历原文与结构化简历
+- 岗位原文与结构化岗位
+- `job_id` 与简历优化流程所需的关联数据
+
+它的作用不是引入复杂数据库系统，而是避免所有数据只存在内存中。这样刷新页面、重新请求接口或重启后端时，仍能通过 ID 找回已上传的数据。对于当前项目，SQLite 是最轻量、最稳妥的方案。
+
+## 构建与检查
+
+```bash
+npm run build
+npm run lint
+```
+
+后端也可以单独做语法检查：
+
+```bash
+cd apps/backend
+python -m compileall app
+```
+
+## 说明
+
+本项目基于开源项目 `srbhr/Resume-Matcher` 二次开发，已针对中文求职和国内模型调用场景做了较大调整：
+
+- 移除本地 Ollama / 本地 embedding provider
+- 移除 MarkItDown 等重依赖
+- 默认使用智谱 OpenAI 兼容 API
+- 保留 SQLite 作为轻量本地状态存储
+- 前端界面中文化
+
+提示词模板参考了中文 HR / 面试官视角的简历审计风格，用于输出更直接、更适合修改简历的建议。

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+import { API_URL } from './config';
 
 /** Fetches job data by job ID */
 export async function getJob(jobId: string) {

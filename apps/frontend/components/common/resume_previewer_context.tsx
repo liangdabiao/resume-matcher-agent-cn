@@ -42,6 +42,8 @@ export interface Data {
     request_id: string;
     resume_id: string;
     job_id: string;
+    resume_preview?: ResumePreview;
+    new_score?: number;
     analysis_result?: string;
     details?: string;
     commentary?: string;

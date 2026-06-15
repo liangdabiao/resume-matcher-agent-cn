@@ -95,8 +95,7 @@ Puedes personalizar cualquier variable en estos archivos antes o después de la 
 
     Esto hará lo siguiente:
 
-      - Verificar/instalar prerrequisitos (`node`, `npm`, `python3`, `pip3`, `uv`, `ollama`).
-      - Descargar el modelo `gemma3:4b` a través de Ollama.
+      - Verificar/instalar prerrequisitos (`node`, `npm`, `python3`, `pip3`, `uv`).
       - Inicializar los archivos `.env` en la raíz y en el backend.
       - Instalar dependencias de Node.js (`npm ci`) en la raíz y en el frontend.
       - Sincronizar dependencias de Python en `apps/backend` a través de `uv sync`.
@@ -141,10 +140,6 @@ Puedes personalizar cualquier variable en estos archivos antes o después de la 
   - **`uv: command not found`** (comando no encontrado) a pesar de la instalación:
 
       - Asegúrate de que `~/.local/bin` esté en tu `$PATH`.
-
-  - **`ollama: command not found`** en Linux:
-
-      - Verifica que el script de instalación se haya ejecutado, o instálalo manualmente a través del gestor de paquetes.
 
   - **Errores de `npm ci`**:
 
