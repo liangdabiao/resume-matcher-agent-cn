@@ -77,13 +77,9 @@ ASYNC_DATABASE_URL="sqlite+aiosqlite:///./app.db"
 PYTHONDONTWRITEBYTECODE=1
 ENV="local"
 
-LLM_API_KEY="your-zhipu-api-key"
+LLM_API_KEY="your-llm-api-key"
 LLM_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
 LL_MODEL="glm-5.1"
-
-EMBEDDING_API_KEY="your-zhipu-api-key"
-EMBEDDING_BASE_URL="https://open.bigmodel.cn/api/paas/v4/"
-EMBEDDING_MODEL="embedding-3"
 ```
 
 ### 前端环境变量
@@ -186,6 +182,56 @@ npm run lint
 cd apps/backend
 python -m compileall app
 ```
+
+## 端到端测试
+
+后端内置了一个 stdlib-only 的端到端冒烟测试，覆盖全部公开 API。
+
+### 运行前提
+
+- 后端已经在 `http://127.0.0.1:8000` 跑起来（`npm run dev:backend`）
+- 项目根目录存在 `苏明远2-简历-20260615.docx`（默认样本简历）
+- 可选：前端跑在 `http://127.0.0.1:3000`，用于 a4cv 静态资源检查
+
+### 快速测试（不含 LLM，约 1 分钟）
+
+```bash
+npm run test:e2e:fast
+# 或：
+cd apps/backend && python test_e2e.py --skip-llm
+```
+
+### 完整测试（含 LLM 调优，约 4-5 分钟）
+
+```bash
+npm run test:e2e
+# 或：
+cd apps/backend && python test_e2e.py
+```
+
+### 自定义参数
+
+```bash
+# 改端口、跳过前端检查、用别的样本简历
+python apps/backend/test_e2e.py \
+  --base-url http://127.0.0.1:8001 \
+  --frontend-url http://127.0.0.1:3001 \
+  --resume-file /path/to/your.docx
+```
+
+### 测试覆盖
+
+| 测试 | 路径 | 验证点 | LLM? |
+| --- | --- | --- | --- |
+| `test_health` | `GET /ping` | 200 + DB 可达 | ❌ |
+| `test_resume_upload` | `POST /api/v1/resumes/upload` | DOCX 解析 + `resume_id` | ❌ |
+| `test_job_upload` | `POST /api/v1/jobs/upload` | JD 解析 + `job_id` | ✅ |
+| `test_improve_nonstream` | `POST /api/v1/resumes/improve` | 中文报告 ≥ 200 字 + ≥ 3 个 Step | ✅ |
+| `test_improve_stream` | `POST /api/v1/resumes/improve?stream=true` | SSE 事件顺序 + TTFT | ✅ |
+| `test_improved_markdown` | `POST /api/v1/resumes/improved-markdown` | markdown 提取 / fallback | ❌ |
+| `test_a4cv_static` | `GET /a4cv/` | 标题 + pickup hook | ❌ |
+
+退出码 0 = 全部通过；非 0 = 有失败。
 
 ## 可视化编辑器集成（a4cv）
 

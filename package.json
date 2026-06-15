@@ -17,7 +17,9 @@
         "start:frontend": "cd apps/frontend && npm start",
         "start": "concurrently \"npm:start:backend\" \"npm:start:frontend\"",
         "lint:frontend": "cd apps/frontend && npm run lint",
-        "lint": "npm run lint:frontend"
+        "lint": "npm run lint:frontend",
+        "test:e2e": "cd apps/backend && python test_e2e.py",
+        "test:e2e:fast": "cd apps/backend && python test_e2e.py --skip-llm"
     },
     "devDependencies": {
         "concurrently": "^9.1.2"

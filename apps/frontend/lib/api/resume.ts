@@ -17,7 +17,83 @@ export async function uploadJobDescriptions(
     return data.job_id[0];
 }
 
-/** Improves the resume and returns the full preview object */
+/**
+ * Streaming variant of /improve. Calls `onProgress` for each status event the
+ * server emits, and resolves with the same `ImprovedResult` shape as the
+ * non-streaming version. The final result is emitted with `status: "completed"`.
+ *
+ * Falls back to plain non-streaming fetch if `text/event-stream` is unavailable
+ * (e.g. some dev proxies buffer the response).
+ */
+export async function improveResumeStream(
+    resumeId: string,
+    jobId: string,
+    onProgress?: (status: string, message: string) => void
+): Promise<ImprovedResult> {
+    const res = await fetch(
+        `${API_URL}/api/v1/resumes/improve?stream=true`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+            body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
+        }
+    );
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Improve failed with status ${res.status}: ${text}`);
+    }
+
+    if (!res.body) {
+        throw new Error('Streaming response has no body');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalResult: ImprovedResult | null = null;
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE messages are separated by \n\n
+        let sep: number;
+        while ((sep = buffer.indexOf('\n\n')) !== -1) {
+            const rawEvent = buffer.slice(0, sep);
+            buffer = buffer.slice(sep + 2);
+            const dataLine = rawEvent
+                .split('\n')
+                .filter((l) => l.startsWith('data:'))
+                .map((l) => l.slice(5).trim())
+                .join('');
+            if (!dataLine) continue;
+            let payload: { status: string; message?: string; result?: ImprovedResult } | null = null;
+            try {
+                payload = JSON.parse(dataLine);
+            } catch {
+                console.warn('Failed to parse SSE event:', dataLine);
+                continue;
+            }
+            if (!payload) continue;
+            if (payload.status === 'completed' && payload.result) {
+                finalResult = payload.result;
+            } else if (payload.status === 'error') {
+                throw new Error(payload.message || 'Unknown streaming error');
+            } else if (onProgress) {
+                onProgress(payload.status, payload.message ?? '');
+            }
+        }
+    }
+
+    if (!finalResult) {
+        throw new Error('Stream ended without a completed result');
+    }
+    return finalResult;
+}
+
+/** Improves the resume and returns the full preview object (non-streaming). */
 export async function improveResume(
     resumeId: string,
     jobId: string

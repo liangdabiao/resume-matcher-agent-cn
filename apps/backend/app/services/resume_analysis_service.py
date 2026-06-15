@@ -1,6 +1,5 @@
 import gc
 import json
-import asyncio
 import logging
 from datetime import datetime
 
@@ -202,7 +201,7 @@ class ResumeAnalysisService:
             }
 
 
-    async def run_and_stream(self, resume_id: str, job_id: str) -> AsyncGenerator:
+    async def run_and_stream(self, resume_id: str, job_id: str, request_id: str = "") -> AsyncGenerator:
         """
         Main method to run the scoring and improving process and return dict.
         Modified to use hr_judge.py prompt template for analysis instead of resume improvement.
@@ -211,14 +210,12 @@ class ResumeAnalysisService:
 
         try:
             yield f"data: {json.dumps({'status': 'starting', 'message': 'Analyzing resume and job description...'})}\n\n"
-            await asyncio.sleep(1)
 
             resume, processed_resume = await self._get_resume(resume_id)
             job, processed_job = await self._get_job(job_id)
             logger.debug("Successfully fetched resume and job data")
 
             yield f"data: {json.dumps({'status': 'parsing', 'message': 'Preparing analysis with hr_judge prompt...'})}\n\n"
-            await asyncio.sleep(1)
 
             # Get the hr_judge prompt template
             logger.info("Getting hr_judge prompt template")
@@ -234,11 +231,10 @@ class ResumeAnalysisService:
                 raw_resume=resume.content,
                 datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             )
-            
+
             logger.debug(f"Generated prompt length: {len(formatted_prompt)} characters")
-            
+
             yield f"data: {json.dumps({'status': 'analyzing', 'message': 'Running analysis with LLM...'})}\n\n"
-            await asyncio.sleep(1)
 
             # Run the analysis using the MD agent manager
             logger.info("Running analysis with LLM")
@@ -250,10 +246,13 @@ class ResumeAnalysisService:
                 "job_id": job_id,
                 "analysis_result": analysis_result,
                 "details": "Analysis completed successfully using hr_judge prompt template",
+                "commentary": "The resume has been analyzed against the job description using the hr_judge prompt template.",
             }
             logger.info(f"Final result: {final_result}")
 
-            yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"
+            # Wrap in {request_id, data: ...} so the SSE `completed` event
+            # matches the shape of the non-streaming /improve response.
+            yield f"data: {json.dumps({'status': 'completed', 'result': {'request_id': request_id, 'data': final_result}})}\n\n"
         except Exception as e:
             logger.error(f"Error in ScoreImprovementService.run_and_stream: {e}")
             import traceback

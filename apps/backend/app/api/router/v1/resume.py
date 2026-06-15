@@ -149,6 +149,7 @@ async def score_and_improve(
                 content=analysis_service.run_and_stream(
                     resume_id=resume_id,
                     job_id=job_id,
+                    request_id=request_id,
                 ),
                 media_type="text/event-stream",
                 headers=headers,

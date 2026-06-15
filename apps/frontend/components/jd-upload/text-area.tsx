@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
+import { uploadJobDescriptions, improveResumeStream } from '@/lib/api/resume';
 
 type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
 type ImprovementStatus = 'idle' | 'improving' | 'error';
@@ -58,12 +58,16 @@ export default function JobDescriptionUploadTextArea() {
 		[text, resumeId]
 	);
 
+	const [progressMessage, setProgressMessage] = useState<string>('');
 	const handleImprove = useCallback(async () => {
 		if (!jobId) return;
 
 		setImprovementStatus('improving');
+		setProgressMessage('准备开始...');
 		try {
-			const preview = await improveResume(resumeId, jobId);
+			const preview = await improveResumeStream(resumeId, jobId, (_status, message) => {
+				setProgressMessage(message);
+			});
 			setImprovedData(preview);
 			router.push('/dashboard');
 		} catch (err) {
@@ -145,15 +149,40 @@ export default function JobDescriptionUploadTextArea() {
 			</div>
 
 			{submissionStatus === 'success' && jobId && (
-				<div className="flex justify-end mt-2">
-					<Button
-						onClick={handleImprove}
-						disabled={improvementStatus === 'improving'}
-						className="font-semibold py-2 px-6 rounded min-w-[90px] bg-green-600 hover:bg-green-700 text-white"
-					>
-						{improvementStatus === 'improving' ? '正在分析...' : '开始优化'}
-					</Button>
-				</div>
+				<>
+					<div className="flex justify-end mt-2">
+						<Button
+							onClick={handleImprove}
+							disabled={improvementStatus === 'improving'}
+							className="font-semibold py-2 px-6 rounded min-w-[90px] bg-green-600 hover:bg-green-700 text-white"
+						>
+							{improvementStatus === 'improving' ? '正在分析...' : '开始优化'}
+						</Button>
+					</div>
+					{improvementStatus === 'improving' && progressMessage && (
+						<div
+							className="mt-3 p-3 text-sm rounded-md bg-blue-50 border border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/30 dark:text-blue-300 flex items-center"
+							role="status"
+							aria-live="polite"
+						>
+							<svg
+								className="animate-spin -ml-1 mr-2 h-4 w-4"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								aria-hidden="true"
+							>
+								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								/>
+							</svg>
+							<span>{progressMessage}</span>
+						</div>
+					)}
+				</>
 			)}
 		</form>
 	);
