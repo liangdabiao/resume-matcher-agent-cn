@@ -12,7 +12,7 @@ export default function Hero() {
 				</div>
 
 				<h1 className="text-center text-8xl font-semibold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.sky.500),theme(colors.pink.400),theme(colors.violet.600),theme(colors.blue.300),theme(colors.purple.400),theme(colors.pink.300),theme(colors.sky.500))] bg-[length:200%_auto] animate-[gradient_8s_linear_infinite]">
-					简历匹配智能体
+					HR批评简历
 				</h1>
 			</div>
 			<p className="mb-12 --font-space-grotesk text-center text-lg bg-gradient-to-br from-pink-400 via-blue-400 to-violet-600 bg-clip-text text-transparent md:text-xl">

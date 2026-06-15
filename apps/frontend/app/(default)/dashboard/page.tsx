@@ -189,7 +189,7 @@ export default function DashboardPage() {
 					<div className="mb-10">
 						<h1 className="text-3xl font-semibold pb-2 text-white">
 											<span className="bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text">
-								简历匹配智能体
+								HR批评简历
 							</span>{' '}
 							控制台
 						</h1>

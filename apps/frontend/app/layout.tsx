@@ -15,9 +15,9 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: '简历匹配智能体',
-  description: '使用简历匹配智能体深度优化你的简历',
-  applicationName: '简历匹配智能体',
+  title: 'HR批评简历',
+  description: '使用 HR批评简历 深度优化你的简历',
+  applicationName: 'HR批评简历',
   keywords: ['简历', '匹配', '求职', '职位分析'],
 };
 
