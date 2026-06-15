@@ -3,10 +3,12 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import BackgroundContainer from '@/components/common/background-container';
 import JobListings from '@/components/dashboard/job-listings';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
+import { API_URL } from '@/lib/api/config';
+import { Button } from '@/components/ui/button';
 
 
 const escapeHtml = (value: string): string =>
@@ -119,6 +121,8 @@ const convertMarkdownToHtml = (markdown: string): string => {
 
 export default function DashboardPage() {
 	const { improvedData } = useResumePreview();
+	const [isOpeningEditor, setIsOpeningEditor] = useState(false);
+	const [editorError, setEditorError] = useState<string | null>(null);
 	if (!improvedData) {
 		return (
 			<BackgroundContainer className="min-h-screen" innerClassName="bg-zinc-950">
@@ -130,8 +134,52 @@ export default function DashboardPage() {
 	}
 
 	const { data } = improvedData;
-	
+
 	const analysisResult = data.analysis_result ?? '暂无分析结果。';
+
+	/**
+	 * Open the optimized resume in the a4cv visual editor.
+	 * Pipeline:
+	 *   1) POST /api/v1/resumes/improved-markdown with the existing analysis_result
+	 *      (backend extracts the first ```md fenced block, falls back to
+	 *      ProcessedResume if the LLM did not emit a code block).
+	 *   2) Stash the returned markdown in sessionStorage.
+	 *   3) Open /a4cv/?pickup=session in a new tab — the a4cv bootstrap reads
+	 *      the value, consumes it, and calls loadMD() to render it on the canvas.
+	 */
+	const handleOpenInEditor = async () => {
+		setEditorError(null);
+		setIsOpeningEditor(true);
+		try {
+			const res = await fetch(`${API_URL}/api/v1/resumes/improved-markdown`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					resume_id: data.resume_id,
+					job_id: data.job_id,
+					analysis_result: analysisResult,
+				}),
+			});
+			if (!res.ok) {
+				const detail = await res.text();
+				throw new Error(`HTTP ${res.status}: ${detail}`);
+			}
+			const json = await res.json();
+			const markdown: string | undefined = json?.data?.markdown;
+			if (!markdown) {
+				throw new Error('后端未返回 markdown 内容');
+			}
+			sessionStorage.setItem('pendingResumeMD', markdown);
+			// 同源路径: /a4cv/index.html 来自 apps/frontend/public/a4cv/index.html
+			// Next.js dev server 不会自动做 directory index 解析，必须显式写文件名
+			window.open('/a4cv/index.html?pickup=session', '_blank', 'noopener,noreferrer');
+		} catch (err) {
+			console.error('Open in editor failed:', err);
+			setEditorError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setIsOpeningEditor(false);
+		}
+	};
 
 
 	return (
@@ -159,15 +207,30 @@ export default function DashboardPage() {
 
 						<div className="md:col-span-2">
 							<div className="bg-gray-900/70 backdrop-blur-sm p-6 rounded-lg shadow-xl h-full flex flex-col border border-gray-800/50">
-								<div className="mb-6">
-									<h2 className="text-2xl font-bold text-white mb-1">分析结果</h2>
-									<p className="text-gray-400 text-sm">
-										以下是你的简历与目标岗位的匹配分析。
-									</p>
+								<div className="mb-6 flex items-start justify-between gap-4">
+									<div>
+										<h2 className="text-2xl font-bold text-white mb-1">分析结果</h2>
+										<p className="text-gray-400 text-sm">
+											以下是你的简历与目标岗位的匹配分析。
+										</p>
+									</div>
+									<Button
+										type="button"
+										onClick={handleOpenInEditor}
+										disabled={isOpeningEditor}
+										className="bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-400 hover:to-purple-400 disabled:opacity-60 whitespace-nowrap"
+									>
+										{isOpeningEditor ? '正在提取…' : '✦ 在可视化编辑器中继续优化'}
+									</Button>
 								</div>
+								{editorError && (
+									<div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+										打开编辑器失败：{editorError}
+									</div>
+								)}
 								<div className="flex-grow overflow-auto">
 									<div className="bg-gray-800/50 p-4 rounded-lg h-full">
-										<div 
+										<div
 											className="prose prose-invert max-w-none text-gray-200 text-sm"
 											dangerouslySetInnerHTML={{ __html: convertMarkdownToHtml(analysisResult) }}
 										/>

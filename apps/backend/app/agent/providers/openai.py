@@ -6,7 +6,7 @@ from typing import Any, Dict
 from fastapi.concurrency import run_in_threadpool
 
 from ..exceptions import ProviderError
-from .base import Provider, EmbeddingProvider
+from .base import Provider
 from ...core import settings
 
 logger = logging.getLogger(__name__)
@@ -51,27 +51,3 @@ class OpenAIProvider(Provider):
             if key in allowed_options and value is not None
         }
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
-
-
-class OpenAIEmbeddingProvider(EmbeddingProvider):
-    def __init__(
-        self,
-        api_key: str | None = None,
-        embedding_model: str = settings.EMBEDDING_MODEL,
-        base_url: str | None = None,
-    ):
-        api_key = api_key or settings.EMBEDDING_API_KEY or os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ProviderError("OpenAI API key is missing")
-        base_url = base_url or settings.EMBEDDING_BASE_URL
-        self._client = OpenAI(api_key=api_key, base_url=base_url)
-        self._model = embedding_model
-
-    async def embed(self, text: str) -> list[float]:
-        try:
-            response = await run_in_threadpool(
-                self._client.embeddings.create, input=text, model=self._model
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            raise ProviderError(f"OpenAI - error generating embedding: {e}") from e

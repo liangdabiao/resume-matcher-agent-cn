@@ -23,21 +23,19 @@ from .exceptions import (
 logger = logging.getLogger(__name__)
 
 
-class ScoreImprovementService:
+class ResumeAnalysisService:
     """
-    Service to handle scoring of resumes and jobs using embeddings.
-    Fetches Resume and Job data from the database, computes embeddings,
-    and calculates cosine similarity scores. Uses LLM for iteratively improving
-    the scoring process.
+    Service to analyze a resume against a job description using a single LLM
+    call (hr_judge prompt). Replaces the original iterative
+    embedding/cosine-similarity scoring loop from upstream.
     """
 
-    def __init__(self, db: AsyncSession, max_retries: int = 5):
-        logger.debug(f"Initializing ScoreImprovementService with max_retries={max_retries}")
+    def __init__(self, db: AsyncSession):
+        logger.debug(f"Initializing ResumeAnalysisService")
         self.db = db
-        self.max_retries = max_retries
         self.md_agent_manager = AgentManager(strategy="md")
         self.json_agent_manager = AgentManager()
-        logger.debug("ScoreImprovementService initialized successfully")
+        logger.debug("ResumeAnalysisService initialized successfully")
 
     def _validate_resume_keywords(
         self, processed_resume: ProcessedResume, resume_id: str
@@ -149,7 +147,7 @@ class ScoreImprovementService:
         Main method to run the scoring and improving process and return dict.
         Modified to use hr_judge.py prompt template for analysis instead of resume improvement.
         """
-        logger.info(f"Starting ScoreImprovementService.run for resume_id={resume_id}, job_id={job_id}")
+        logger.info(f"Starting ResumeAnalysisService.run for resume_id={resume_id}, job_id={job_id}")
 
         try:
             resume, processed_resume = await self._get_resume(resume_id)
@@ -192,7 +190,7 @@ class ScoreImprovementService:
             return execution
         except Exception as e:
             import traceback
-            logger.error(f"Error in ScoreImprovementService.run: {e}")
+            logger.error(f"Error in ResumeAnalysisService.run: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             # Return a default structure with all required fields even in case of error
             return {

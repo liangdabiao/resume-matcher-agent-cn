@@ -18,7 +18,7 @@ from fastapi import (
 from app.core import get_db_session
 from app.services import (
     ResumeService,
-    ScoreImprovementService,
+    ResumeAnalysisService,
     ResumeNotFoundError,
     ResumeParsingError,
     ResumeValidationError,
@@ -27,7 +27,17 @@ from app.services import (
     ResumeKeywordExtractionError,
     JobKeywordExtractionError,
 )
-from app.schemas.pydantic import ResumeImprovementRequest
+from app.schemas.pydantic import (
+    ResumeImprovementRequest,
+    ImprovedMarkdownRequest,
+    ImprovedMarkdownResponse,
+)
+from app.utils.markdown_extractor import (
+    extract_improved_markdown,
+    build_fallback_markdown,
+    count_sections,
+)
+from app.models import ProcessedResume
 
 resume_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -132,11 +142,11 @@ async def score_and_improve(
             raise JobNotFoundError(
                 message="invalid value passed in `job_id` field, please try again with valid job_id."
             )
-        score_improvement_service = ScoreImprovementService(db=db)
+        analysis_service = ResumeAnalysisService(db=db)
 
         if stream:
             return StreamingResponse(
-                content=score_improvement_service.run_and_stream(
+                content=analysis_service.run_and_stream(
                     resume_id=resume_id,
                     job_id=job_id,
                 ),
@@ -144,7 +154,7 @@ async def score_and_improve(
                 headers=headers,
             )
         else:
-            analysis_result = await score_improvement_service.run(
+            analysis_result = await analysis_service.run(
                 resume_id=resume_id,
                 job_id=job_id,
             )
@@ -259,4 +269,74 @@ async def get_resume(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error fetching resume data",
+        )
+
+
+@resume_router.post(
+    "/improved-markdown",
+    response_model=ImprovedMarkdownResponse,
+    summary="Extract the optimized-resume markdown from a previous /improve result",
+)
+async def get_improved_markdown(
+    request: Request,
+    payload: ImprovedMarkdownRequest,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Recover the "modified resume" code block produced by the HR-judge
+    prompt (Step 4) so it can be fed straight into the a4cv visual editor.
+
+    Strategy:
+      1. Try to extract the first/largest ```md fenced block from the
+         caller-supplied `analysis_result` text.
+      2. If extraction fails (or the block doesn't look like a markdown
+         document), rebuild a minimal a4cv-compatible markdown from the
+         `processed_resumes` row stored in DB.
+    """
+    request_id = getattr(request.state, "request_id", str(uuid4()))
+    headers = {"X-Request-ID": request_id}
+
+    try:
+        markdown, source = extract_improved_markdown(payload.analysis_result)
+        if not markdown:
+            logger.info(
+                f"No ```md code block found in analysis_result for "
+                f"resume_id={payload.resume_id}; falling back to ProcessedResume."
+            )
+            from sqlalchemy.future import select
+            result = await db.execute(
+                select(ProcessedResume).where(
+                    ProcessedResume.resume_id == payload.resume_id
+                )
+            )
+            processed_resume = result.scalars().first()
+            if not processed_resume:
+                raise ResumeNotFoundError(
+                    message=f"Resume with id {payload.resume_id} not found"
+                )
+            markdown = build_fallback_markdown(processed_resume)
+            source = "fallback"
+
+        body = ImprovedMarkdownResponse(
+            markdown=markdown,
+            source=source,
+            sections_detected=count_sections(markdown),
+        )
+        return JSONResponse(
+            content={"request_id": request_id, "data": body.model_dump()},
+            headers=headers,
+        )
+    except ResumeNotFoundError as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(
+            f"Error extracting improved markdown: {str(e)} - "
+            f"traceback: {traceback.format_exc()}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error extracting improved markdown",
         )

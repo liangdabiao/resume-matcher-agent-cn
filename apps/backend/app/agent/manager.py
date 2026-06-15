@@ -2,8 +2,8 @@ from typing import Any, Dict
 
 from ..core import settings
 from .strategies.wrapper import JSONWrapper, MDWrapper
-from .providers.base import Provider, EmbeddingProvider
-from .providers.openai import OpenAIProvider, OpenAIEmbeddingProvider
+from .providers.base import Provider
+from .providers.openai import OpenAIProvider
 
 
 class AgentManager:
@@ -39,22 +39,3 @@ class AgentManager:
     async def run(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         provider = await self._get_provider(**kwargs)
         return await self.strategy(prompt, provider, **kwargs)
-
-
-class EmbeddingManager:
-    def __init__(self, model: str = settings.EMBEDDING_MODEL) -> None:
-        self._model = model
-
-    async def _get_embedding_provider(self, **kwargs: Any) -> EmbeddingProvider:
-        api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY or settings.LLM_API_KEY)
-        base_url = kwargs.get("embedding_base_url", settings.EMBEDDING_BASE_URL)
-        model = kwargs.get("embedding_model", self._model)
-        return OpenAIEmbeddingProvider(
-            api_key=api_key,
-            embedding_model=model,
-            base_url=base_url,
-        )
-
-    async def embed(self, text: str, **kwargs: Any) -> list[float]:
-        provider = await self._get_embedding_provider(**kwargs)
-        return await provider.embed(text)

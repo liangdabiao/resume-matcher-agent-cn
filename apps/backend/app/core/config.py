@@ -12,7 +12,14 @@ class Settings(BaseSettings):
     # which is copied to the user's .env file upon setup.
     PROJECT_NAME: str = "Resume Matcher"
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:3002",
+        "http://127.0.0.1:3002",
+    ]
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
     SYNC_DATABASE_URL: str = "sqlite:///./app.db"
@@ -21,9 +28,6 @@ class Settings(BaseSettings):
     LLM_API_KEY: Optional[str] = None
     LLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
     LL_MODEL: str = "glm-5.1"
-    EMBEDDING_API_KEY: Optional[str] = None
-    EMBEDDING_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
-    EMBEDDING_MODEL: str = "embedding-3"
     LOG_DIR: str = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "logs")
     # 添加ENV属性，默认使用local环境
     ENV: Literal["production", "staging", "local"] = "local"
@@ -31,6 +35,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
         env_file_encoding="utf-8",
+        extra="ignore",  # 容忍 .env 中遗留的未声明字段
     )
 
 
