@@ -29,6 +29,7 @@ const JobListings: React.FC<JobListingsProps> = ({ resumeId }) => {
 	const [analyzedJob, setAnalyzedJob] = useState<AnalyzedJobData | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = useState(false);
 	const [isImproving, setIsImproving] = useState(false);
+	const [improveProgress, setImproveProgress] = useState('');
 	const [loadingInitialJob, setLoadingInitialJob] = useState(true);
 	// Optional: add error state for analysis failures
 	// const [error, setError] = useState<string | null>(null);

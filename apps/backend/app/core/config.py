@@ -4,6 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from .win_rotating_file_handler import WindowsSafeRotatingFileHandler
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator, field_validator
 from typing import List, Optional, Literal
 
 
@@ -12,14 +13,20 @@ class Settings(BaseSettings):
     # which is copied to the user's .env file upon setup.
     PROJECT_NAME: str = "Resume Matcher"
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
-    ALLOWED_ORIGINS: List[str] = [
+    # CORS 允许的来源（原始配置值，支持逗号分隔或 JSON 数组字符串）。
+    # 宝塔/服务器同源反代部署时，浏览器经 nginx 同源访问后端，不需要 CORS，
+    # 此时留空或不设置即可；仅当前端用独立域名/端口访问后端时才需要填。
+    # 示例：
+    #   ALLOWED_ORIGINS="https://example.com,https://www.example.com"
+    #   ALLOWED_ORIGINS='["https://example.com","https://www.example.com"]'
+    ALLOWED_ORIGINS: str = ",".join([
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
         "http://localhost:3002",
         "http://127.0.0.1:3002",
-    ]
+    ])
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
     SYNC_DATABASE_URL: str = "sqlite:///./app.db"
@@ -37,6 +44,56 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",  # 容忍 .env 中遗留的未声明字段
     )
+
+    @model_validator(mode="after")
+    def _resolve_allowed_origins(self):
+        """
+        把 ALLOWED_ORIGINS（str）解析成真正的列表，供 CORSMiddleware 使用。
+        字段声明为 str 而非 List[str]，是为了绕过 pydantic-settings 对容器类型
+        字段强制做 json.loads 解析（普通逗号字符串会被当成非法 JSON 报错）。
+        支持：
+          - 逗号分隔："https://a.com,https://b.com"
+          - JSON 数组：'["https://a.com","https://b.com"]'
+          - 空字符串：表示不限制来源（返回空列表，CORS 中间件再处理）
+        """
+        import json as _json
+        raw = (self.ALLOWED_ORIGINS or "").strip()
+        parsed: List[str] = []
+        if raw:
+            if raw.startswith("["):
+                try:
+                    parsed = [s.strip() for s in _json.loads(raw) if isinstance(s, str) and s.strip()]
+                except _json.JSONDecodeError:
+                    parsed = [s.strip() for s in raw.split(",") if s.strip()]
+            else:
+                parsed = [s.strip() for s in raw.split(",") if s.strip()]
+        # resolved list
+        object.__setattr__(self, "_allowed_origins_list", parsed)
+        return self
+
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        """解析后的 CORS 来源列表，供 CORSMiddleware 使用。"""
+        return getattr(self, "_allowed_origins_list", [])
+
+    @model_validator(mode="after")
+    def _validate_runtime_required(self):
+        """
+        生产环境（ENV=production）下做最小启动校验，避免空 Key / 默认密钥
+        静默启动后所有 LLM 流程直接 500。本地 / staging 不强制，方便开发。
+        """
+        if self.ENV == "production":
+            if not self.LLM_API_KEY:
+                raise ValueError(
+                    "ENV=production 时 LLM_API_KEY 不能为空，"
+                    "请在 apps/backend/.env 或容器环境变量中填写有效的 OpenAI 兼容 API Key。"
+                )
+            if not self.SESSION_SECRET_KEY or self.SESSION_SECRET_KEY == "change-me":
+                raise ValueError(
+                    "ENV=production 时 SESSION_SECRET_KEY 必须改成随机字符串，"
+                    "不能使用 .env.sample 里的默认值 change-me。"
+                )
+        return self
 
 
 settings = Settings()

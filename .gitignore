@@ -62,3 +62,23 @@ Thumbs.db
 # Build artifacts
 build/
 dist/
+
+# ---- 个人开发笔记 / 临时文件（不应进入开源仓库）----
+# 注意：README.md、docs/ 下的文档不在忽略范围，仍可正常提交。
+apps/backend/app/*.txt
+apps/backend/b.md
+apps/frontend/a.md
+apps/frontend/improve_bug.md
+apps/frontend/analysis_result_example.md
+apps/frontend/全流程分析.md
+apps/frontend/接口请求和返回.md
+apps/backend/check_db.py
+apps/backend/test_e2e_endpoint.py
+apps/backend/test_extractor.py
+apps/backend/test_log_rotation.py
+apps/backend/test_logging.py
+apps/backend/test_paths.py
+apps/backend/test_quick.py
+apps/backend/test_route.py
+apps/backend/test_static.py
+apps/backend/test_vendor.py
