@@ -31,7 +31,6 @@
 
 ```text
 .
-├── a4cv-main/                # 第三方可视化简历编辑器源码
 ├── apps/
 │   ├── backend/              # FastAPI 后端
 │   │   ├── app/
@@ -45,16 +44,17 @@
 │   │   │   └── utils/        # markdown_extractor 等工具
 │   │   ├── .env.sample       # 后端环境变量示例
 │   │   ├── requirements.txt
-│   │   └── pyproject.toml
+│   │   ├── pyproject.toml
+│   │   └── test_e2e.py       # 端到端冒烟测试
 │   └── frontend/             # Next.js 前端
 │       ├── app/              # 页面路由
 │       ├── components/       # UI 与业务组件
 │       ├── lib/api/          # 前端 API 客户端
 │       └── public/a4cv/      # a4cv 编辑器静态资源（同源托管）
 ├── docs/
+│   └── a4cv-integration/     # 整合 a4cv 时的调研笔记
 ├── setup.sh
 ├── setup.ps1
-├── copy-a4cv.ps1             # 同步 a4cv-main -> public/a4cv 的脚本
 └── package.json
 ```
 
@@ -235,11 +235,10 @@ python apps/backend/test_e2e.py \
 
 ## 可视化编辑器集成（a4cv）
 
-[Resume Studio（a4cv）](https://github.com/...) 是一个独立的中文可视化简历编辑器，仓库内 `a4cv-main/` 是它的源码目录。
+[Resume Studio（a4cv）](https://github.com/...) 是一个独立的中文可视化简历编辑器，编辑器资源（`index.html` + `vendor/*` + `assets/*`）已经一次性复制到 [apps/frontend/public/a4cv/](file:///d:/resume-upup/resume-matcher-agent-cn/apps/frontend/public/a4cv/)，由 Next.js 当作静态资源服务。整合 a4cv 时的调研笔记保留在 [docs/a4cv-integration/](file:///d:/resume-upup/resume-matcher-agent-cn/docs/a4cv-integration/)。
 
-为了把它无缝接到本系统里，我们采用**同源托管**方案：
+**同源托管**方案：
 
-- 把 `a4cv-main/` 下的 `index.html`、`vendor/*`、`assets/*` 复制到 `apps/frontend/public/a4cv/`，随主前端一起由 Next.js 服务
 - dashboard 的「在可视化编辑器中继续优化」按钮调用后端 `POST /api/v1/resumes/improved-markdown` 抽取 Markdown，写入 `sessionStorage`，再 `window.open('/a4cv/index.html?pickup=session')`
 - a4cv 的 IIFE 在启动时优先读 `sessionStorage.pendingResumeMD`（或 `?md=` URL 参数），把简历直接渲染到画布上
 
@@ -253,34 +252,6 @@ dashboard 点击按钮
    └─► sessionStorage.setItem('pendingResumeMD', md)
    └─► window.open('/a4cv/index.html?pickup=session')
          └─► a4cv IIFE 读取 sessionStorage，调 loadMD() 渲染
-```
-
-### 同步 a4cv 资源
-
-任何时候 `a4cv-main/` 有更新，跑一次同步脚本：
-
-```powershell
-# Windows PowerShell
-.\copy-a4cv.ps1
-```
-
-脚本会清理旧的 `public/a4cv/`，重新复制 `index.html`、`vendor/*`、`assets/*`，并打印每个文件的大小做完整性校验。Linux/macOS 用户可以临时在 PowerShell Core 下运行同一脚本。
-
-### 端到端验证
-
-后端 + 前端启动后，`apps/backend/` 下保留了几个测试脚本，可随时复跑：
-
-```bash
-# 后端路由 + Markdown 抽取
-python test_extractor.py        # 单元测试 extract/build_fallback
-python test_route.py            # 验证 /improved-markdown 已注册
-python test_e2e_endpoint.py     # 实际打 HTTP，验证抽取/fallback 路径
-python test_static.py           # 验证 a4cv 静态资源可访问
-python test_vendor.py           # 验证 5 个 vendor JS 全部 200
-
-# 浏览器端到端（需要 chrome.exe）
-node test_e2e_browser.js        # 注入 sessionStorage，验证 a4cv 渲染
-node test_e2e_full.js           # 模拟 dashboard fetch + 跳转 a4cv 完整链路
 ```
 
 ## 部署
@@ -318,12 +289,6 @@ cp apps/frontend/.env.sample apps/frontend/.env
 - 前端：`NEXT_PUBLIC_API_URL` 指向后端地址（默认 `http://127.0.0.1:8000`）
 
 > 关键 CORS 配置：`apps/backend/app/core/config.py` 的 `ALLOWED_ORIGINS` 默认已包含 `3000/3001/3002`，覆盖开发期常见的端口冲突场景。生产部署时把它改成你前端实际域名即可。
-
-### 4. 同步 a4cv 资源（首次部署必做）
-
-```powershell
-.\copy-a4cv.ps1
-```
 
 ### 5. 启动开发模式
 
