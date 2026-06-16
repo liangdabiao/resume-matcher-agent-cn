@@ -125,6 +125,8 @@ LLM_MODEL="glm-5.1"
 
 > **必填**：`LLM_API_KEY`。生产部署（`ENV=production`）下，`LLM_API_KEY` 为空或 `SESSION_SECRET_KEY` 仍为 `change-me` 时，后端会**拒绝启动**。
 
+> 💡 **小贴士**：`.env` 里的值带不带引号都行（如 `LLM_API_KEY="sk-xxx"` 和 `LLM_API_KEY=sk-xxx` 等效），Docker Compose 和本地都能正确识别。若不建 `.env` 直接启动，后端会以 `ENV=local` 运行（可正常跑，但建议填 Key 以使用 AI 功能）。
+
 启动：
 
 ```bash
@@ -135,7 +137,9 @@ docker compose up --build -d
 
 - 前端：http://localhost:3000
 - 后端：http://localhost:8000
-- 健康检查：http://localhost:8000/ping
+- 健康检查：http://localhost:8000/ping （返回 `{"message":"pong",...}`）
+
+> 后端容器健康检查用 Python 探测 `/ping`（slim 镜像无 curl）。`STATUS` 显示 `healthy` 即服务就绪；启动初期可能短暂显示 `health: starting`，属正常。
 
 查看日志 / 停止：
 

@@ -288,6 +288,7 @@ def improved_markdown():
     # 1. 尝试从分析文本抽代码块
     md, source = _extract_md_block(analysis_result)
     if md:
+        md = _normalize_md_for_a4cv(md)  # 加粗小节标题转 ##，让 a4cv 能识别结构
         return jsonify(
             {
                 "request_id": rid,
@@ -304,7 +305,7 @@ def improved_markdown():
         view = store.get_resume_view(resume_id)
         processed = view.get("processed_resume") if view else None
         if processed:
-            md = _build_fallback_markdown(processed)
+            md = _normalize_md_for_a4cv(_build_fallback_markdown(processed))
             return jsonify(
                 {
                     "request_id": rid,
@@ -457,6 +458,56 @@ def _count_sections(md: str) -> int:
     if not md:
         return 0
     return len(_ALL_HEADING_RE.findall(md))
+
+
+# a4cv 能识别的简历小节标题关键词（与 a4cv looksLikeSectionTitle 对齐）。
+# LLM 常把小节标题写成加粗 **工作经历** 而非 ## 工作经历，这里统一转成 ##，
+# 让 a4cv 的 normalizeImportedMarkdown 能正确识别结构。
+_A4CV_SECTION_KEYWORDS = (
+    "自我评价|个人简介|职业概况|个人优势|工作经历|工作经验|项目经历|项目经验|"
+    "实习经历|教育经历|教育背景|技能|技能特长|专业技能|证书|证书与荣誉|荣誉奖项|"
+    "关键成果|作品集|发表论文|论文发表|社团经历|培训经历"
+)
+# 匹配独立的加粗小节标题行：**工作经历** 或 **工作经历**
+_BOLD_SECTION_RE = re.compile(
+    r"^[ \t]*\*{2}\s*(" + _A4CV_SECTION_KEYWORDS + r")\s*[:：]?\*{2}[ \t]*$",
+    re.MULTILINE,
+)
+
+
+def _normalize_md_for_a4cv(md: str) -> str:
+    """
+    把 LLM 生成的简历 markdown 标准化，让 a4cv 编辑器能正确识别结构：
+    1. 加粗小节标题转 ## 标题：**工作经历** → ## 工作经历
+    2. 首行若是纯名字（无 #），补成 # 姓名（a4cv 靠 # 识别姓名栏）
+
+    a4cv 的 normalizeImportedMarkdown：只要 markdown 含任何 # 标题就走
+    normalizeHeadingMarkdown 直接返回，不会自动补 # 姓名。而 LLM 常把姓名
+    写成纯文本首行，所以必须在这里补上。
+    """
+    if not md:
+        return md
+
+    def _repl(m):
+        return f"## {m.group(1)}"
+
+    md = _BOLD_SECTION_RE.sub(_repl, md)
+
+    # 首行补 # 姓名：若首行不是标题、不是空行、也不是联系方式行，视为姓名
+    lines = md.split("\n")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue  # 跳过前导空行
+        if stripped.startswith("#"):
+            break  # 首个非空行已是标题，无需补
+        # 简易判断：联系方式行（含 @ 或多个数字）不当作姓名
+        if "@" in stripped or re.search(r"\d{4,}", stripped):
+            break
+        lines[i] = f"# {stripped}"
+        break
+
+    return "\n".join(lines)
 
 
 def _build_fallback_markdown(processed: dict) -> str:
