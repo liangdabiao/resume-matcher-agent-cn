@@ -8,11 +8,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY apps/frontend/ ./
 
-# Allow callers to inject browser API URL and internal rewrite target at build time.
+# Allow callers to inject the API URL at build time. Empty = same-origin.
 ARG NEXT_PUBLIC_API_URL
-ARG BACKEND_INTERNAL_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL
 
 RUN npm run build
 
@@ -26,7 +24,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
 EXPOSE 3000
 

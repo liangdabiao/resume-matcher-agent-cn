@@ -1,0 +1,45 @@
+{
+  "job_id": "72b7ad19-4672-45d8-8234-4350f6919c14",
+  "resume_id": "12e55a82-bd7a-45ed-a0cc-a822a3411f26",
+  "content": "AI Agent???,??Python?LLM?RAG",
+  "created_at": "2026-06-16T00:37:29.381498+00:00",
+  "processed": {
+    "job_title": "AI Agent",
+    "company_profile": {
+      "companyName": "",
+      "industry": null,
+      "website": null,
+      "description": null
+    },
+    "location": {
+      "city": "",
+      "state": "",
+      "country": "",
+      "remoteStatus": "On-site"
+    },
+    "date_posted": "2025-01-01",
+    "employment_type": "Full-time",
+    "job_summary": "",
+    "key_responsibilities": [],
+    "qualifications": {
+      "required": [],
+      "preferred": []
+    },
+    "compensation_and_benfits": {
+      "salaryRange": null,
+      "benefits": []
+    },
+    "application_info": {
+      "howToApply": null,
+      "applyLink": null,
+      "contactEmail": null
+    },
+    "extracted_keywords": [
+      "AI Agent",
+      "Python",
+      "LLM",
+      "RAG"
+    ],
+    "processed_at": "2026-06-16T00:37:29.381426+00:00"
+  }
+}

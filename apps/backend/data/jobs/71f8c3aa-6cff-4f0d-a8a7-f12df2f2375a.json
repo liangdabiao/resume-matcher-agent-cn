@@ -1,0 +1,77 @@
+{
+  "job_id": "71f8c3aa-6cff-4f0d-a8a7-f12df2f2375a",
+  "resume_id": "3328aca3-d502-4c16-bcaf-21a54d3edf4d",
+  "content": "AI Agent 工程师岗位要求（JD）\n一、 岗位名称\n\nAI Agent 工程师 / LLM Agent 开发工程师 / AI 应用架构师\n\n二、 核心职责\n\nAgent 设计与开发：基于大语言模型（LLM）设计、构建和部署自主AI Agent系统，使其具备规划（Planning）、工具使用（Tool Use）、记忆（Memory）和反思（Reflection）能力。\n\nRAG 系统优化：开发和维护检索增强生成（Retrieval-Augmented Generation）管道，确保Agent能够访问最新的外部知识库。\n\n工具集成：将外部API、数据库、SaaS服务（如Gmail, Notion, GitHub）封装成Agent可调用的工具（Function Calling）。\n\nPrompt 与 推理优化：设计和迭代复杂的提示词（Prompt Engineering），优化模型的推理路径，降低幻觉（Hallucination）和延迟。\n\n评估体系（Eval）建设：搭建自动化测试和评估框架，用于衡量Agent在准确性、毒性、效率和成本方面的表现。\n\n多模态探索（加分项）：探索文本、图像、语音结合的多模态Agent应用场景。\n\n三、 硬性技能要求 (Hard Skills)\n1. 编程与工程基础 (必备)\n\nPython: 精通Python编程，熟悉异步编程（Asyncio）。\n\n后端开发: 熟悉 FastAPI / Flask / Django 等Web框架，能够构建高并发的API服务。\n\n数据工程: 熟悉 SQL/NoSQL 数据库，了解向量数据库（Milvus, Pinecone, Qdrant, ChromaDB）。\n\nDevOps: 熟悉 Docker, Kubernetes, CI/CD 流程，有云原生（AWS/Azure/GCP）部署经验。\n\n2. 大模型生态与框架 (核心)\n\nLLM 框架: 深入理解并熟练使用 LangChain, LlamaIndex, Semantic Kernel, CrewAI​ 或 AutoGen​ 等主流Agent开发框架。\n\n模型 API: 熟悉 OpenAI, Anthropic (Claude), Google (Gemini) 以及开源模型（Llama 3, Qwen, DeepSeek）的API调用与微调。\n\nPrompt 工程: 掌握 Few-shot, Chain-of-Thought (CoT), ReAct, Reflection 等提示词技巧。\n\n3. Agent 核心技术栈\n\nRAG (检索增强生成): 熟悉文档切分（Chunking）、Embedding模型选型、混合检索（Hybrid Search）、重排序（Reranking）等技术。\n\nFunction/Tool Calling: 能够将复杂业务逻辑封装为Agent可调用的JSON Schema工具。\n\nMemory 机制: 了解短期记忆（Context Window管理）和长期记忆（Vector Store + 摘要）的实现方案。\n\nAgent 架构: 熟悉 ReAct, Plan-and-Execute, 多Agent协作（Multi-Agent Systems）等架构模式。\n\n4. 评估与监控 (Critical)\n\n熟悉 LangSmith, Weights & Biases (W&B), Arize AI​ 等LLMOps工具。\n\n能够定义评估指标（如 Faithfulness, Answer Relevanc",
+  "created_at": "2026-06-16T01:06:00.399546+00:00",
+  "processed": {
+    "job_title": "AI Agent Engineer",
+    "company_profile": {
+      "companyName": "Unknown Company",
+      "industry": null,
+      "website": null,
+      "description": null
+    },
+    "location": {
+      "city": "Unknown",
+      "state": "Unknown",
+      "country": "Unknown",
+      "remoteStatus": "Remote"
+    },
+    "date_posted": "2024-01-01",
+    "employment_type": "Full-time",
+    "job_summary": "Design, build, and deploy autonomous AI Agent systems based on large language models (LLMs), enabling planning, tool use, memory, and reflection capabilities. Optimize RAG pipelines, integrate external tools, improve prompts and reasoning, and build evaluation systems.",
+    "key_responsibilities": [
+      "Design and develop autonomous AI Agent systems based on LLMs with planning, tool use, memory, and reflection capabilities.",
+      "Develop and maintain Retrieval-Augmented Generation (RAG) pipelines to access up-to-date external knowledge bases.",
+      "Integrate external APIs, databases, and SaaS services (e.g., Gmail, Notion, GitHub) as callable tools (Function Calling).",
+      "Design and iterate complex prompts (Prompt Engineering) to optimize reasoning paths, reducing hallucinations and latency.",
+      "Build automated testing and evaluation frameworks to measure agent accuracy, toxicity, efficiency, and cost.",
+      "Explore multi-modal agent applications combining text, image, and voice (bonus)."
+    ],
+    "qualifications": {
+      "required": [
+        "Proficient in Python, including asynchronous programming (Asyncio).",
+        "Familiar with web frameworks like FastAPI, Flask, or Django for high-concurrency API services.",
+        "Knowledge of SQL/NoSQL databases, vector databases (Milvus, Pinecone, Qdrant, ChromaDB).",
+        "Experience with Docker, Kubernetes, CI/CD, and cloud platforms (AWS/Azure/GCP).",
+        "Deep understanding and proficiency in LLM frameworks such as LangChain, LlamaIndex, Semantic Kernel, CrewAI, or AutoGen.",
+        "Familiarity with model APIs from OpenAI, Anthropic (Claude), Google (Gemini), and open-source models (Llama 3, Qwen, DeepSeek).",
+        "Mastery of prompt engineering techniques: Few-shot, Chain-of-Thought, ReAct, Reflection.",
+        "Knowledge of RAG technologies: document chunking, embedding model selection, hybrid search, reranking.",
+        "Ability to encapsulate complex business logic into JSON Schema tools for Function/Tool Calling.",
+        "Understanding of short-term memory (context window management) and long-term memory (vector store + summary) implementations.",
+        "Familiarity with Agent architectures: ReAct, Plan-and-Execute, Multi-Agent Systems.",
+        "Experience with LLMOps tools like LangSmith, Weights & Biases, Arize AI.",
+        "Ability to define evaluation metrics (e.g., Faithfulness, Answer Relevance)."
+      ],
+      "preferred": [
+        "Experience with multi-modal AI agents exploring text, image, and voice modalities."
+      ]
+    },
+    "compensation_and_benfits": {
+      "salaryRange": null,
+      "benefits": []
+    },
+    "application_info": {
+      "howToApply": null,
+      "applyLink": null,
+      "contactEmail": null
+    },
+    "extracted_keywords": [
+      "AI Agent",
+      "LLM",
+      "LangChain",
+      "RAG",
+      "Prompt Engineering",
+      "Function Calling",
+      "Retrieval-Augmented Generation",
+      "Autonomous Agent",
+      "Vector Database",
+      "Multi-modal",
+      "Docker",
+      "Kubernetes",
+      "Python"
+    ],
+    "processed_at": "2026-06-16T01:06:00.399500+00:00"
+  }
+}

@@ -1,123 +1,100 @@
-# Resume Matcher Project Overview
+# QWEN.md
 
-## Project Description
-Resume Matcher is a full-stack application that helps users increase their interview chances by tailoring their resumes to specific job descriptions. The application consists of a FastAPI backend with a Next.js/React frontend.
+Project guidance for AI assistants (Qwen / Tongyi) working in this repository.
+
+## Overview
+
+Resume Matcher is a full-stack application that helps users increase interview chances by tailoring resumes to job descriptions. It consists of a **Flask backend** (Python, sync) with a **Next.js/React frontend**, using **JSON file storage** (no database) and an OpenAI-compatible LLM.
+
+## Tech Stack
+
+- **Backend**: Flask 3.0+, Gunicorn (sync WSGI, Baota/production friendly), Python 3.12+
+- **Storage**: JSON files (no SQLite / no ORM / no migration)
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS 4
+- **AI**: OpenAI-compatible API (default Zhipu glm-5.1) via official `openai` SDK
 
 ## Project Structure
+
 ```
 apps/
-├── backend/           # Python FastAPI backend
-│   ├── app/           # Main application code
-│   │   ├── api/       # API routes and middleware
-│   │   ├── core/      # Configuration and core functionality
-│   │   ├── models/    # Database models
-│   │   ├── schemas/   # Pydantic schemas
-│   │   ├── services/  # Business logic
-│   │   ├── main.py    # Application entry point
-│   │   └── base.py    # App configuration
-│   ├── requirements.txt  # Python dependencies
-│   ├── pyproject.toml    # Project metadata and dependencies
-│   └── .env.sample       # Sample environment variables
+├── backend/           # Flask backend (minimal, 7 files)
+│   ├── app.py         # Flask app + all routes
+│   ├── config.py      # os.getenv + dotenv config
+│   ├── llm.py         # OpenAI call + JSON parse fallback
+│   ├── parser.py      # PDF/DOCX text extraction
+│   ├── prompts.py     # 3 prompt templates
+│   ├── store.py       # JSON file storage
+│   ├── run.py         # local dev entry (prod: gunicorn app:app)
+│   ├── data/          # JSON storage (resumes/, jobs/)
+│   ├── requirements.txt
+│   └── .env.sample
 └── frontend/          # Next.js/React frontend
-    ├── app/           # Application routes and pages
+    ├── app/           # pages and routes
     ├── components/    # React components
-    ├── public/        # Static assets
-    ├── package.json   # Node.js dependencies and scripts
-    └── .env.sample    # Sample environment variables
+    ├── lib/api/       # backend API client
+    ├── public/a4cv/   # a4cv visual resume editor
+    ├── package.json
+    └── .env.sample
 ```
 
-## Technologies Used
+## Backend Architecture
+
+- All routes in `app.py`, prefixed `/api/v1/`. Health check at `/ping`.
+- LLM: single function `llm.call_llm(prompt, expect_json=False)` with `temperature=0, top_p=0.9`
+- Storage: `data/resumes/<uuid>.json`, `data/jobs/<uuid>.json` (no database, no migration)
+- `analysis_result` is NOT persisted (returned per-request)
+
+## Run
 
 ### Backend
-- **Framework**: FastAPI (Python)
-- **Database**: SQLite with SQLAlchemy (async using aiosqlite)
-- **LLM Integration**: Ollama with support for other providers
-- **Embeddings**: Qwen3-Embedding model via Ollama
-- **Key Dependencies**:
-  - FastAPI for API development
-  - SQLAlchemy for database ORM
-  - Pydantic for data validation
-  - OpenAI/Ollama for LLM integration
-  - Uvicorn for ASGI server
+```bash
+cd apps/backend
+pip install -r requirements.txt
+python run.py                                  # dev: http://localhost:8000
+gunicorn -w 2 -b 127.0.0.1:8000 --timeout 300 app:app   # production
+```
 
 ### Frontend
-- **Framework**: Next.js 15 (React 19)
-- **Styling**: Tailwind CSS
-- **UI Components**: Radix UI, Lucide React icons
-- **Key Dependencies**:
-  - Next.js for React framework
-  - React 19 for UI library
-  - Tailwind CSS for styling
-  - TypeScript for type safety
-
-## Development Setup
-
-### Backend Setup
-1. Navigate to the backend directory: `cd backend`
-2. Install Python dependencies: `pip install -r requirements.txt`
-3. Copy `.env.sample` to `.env` and configure values
-4. Run the development server: `python -m app.main`
-
-### Frontend Setup
-1. Navigate to the frontend directory: `cd frontend`
-2. Install Node.js dependencies: `npm install`
-3. Copy `.env.sample` to `.env` and configure values
-4. Run the development server: `npm run dev`
-
-## Key Commands
-
-### Backend
-- Development server: `python -m app.main`
-- The server will run on `http://localhost:8000`
-- API documentation available at `http://localhost:8000/api/docs`
-
-### Frontend
-- Development server: `npm run dev`
-- Build for production: `npm run build`
-- Start production server: `npm run start`
-- Lint code: `npm run lint`
-- Format code: `npm run format`
-- The server will run on `http://localhost:3000`
+```bash
+cd apps/frontend
+npm install
+npm run dev                       # dev: http://localhost:3000
+npm run build && npm run start    # production
+```
 
 ## API Endpoints
-The backend provides RESTful APIs for:
-- Job description upload and processing
-- Resume upload and processing
-- Matching resumes with job descriptions
 
-Key endpoints:
-- `POST /api/v1/job/upload` - Upload job description
-- `GET /api/v1/job` - Get job data
-- `POST /api/v1/resume/upload` - Upload resume
-- `GET /api/v1/resume` - Get resume data
+- `POST /api/v1/resumes/upload` — upload & parse resume (PDF/DOCX)
+- `POST /api/v1/resumes/improve` — analyze resume vs JD (`?stream=true` for SSE)
+- `GET  /api/v1/resumes?resume_id=` — get resume data
+- `POST /api/v1/resumes/improved-markdown` — extract optimized resume markdown
+- `POST /api/v1/jobs/upload` — upload & parse job description
+- `GET  /api/v1/jobs?job_id=` — get job data
+- `GET  /ping` — health check
 
-## Environment Variables
+## Config
 
-### Backend (.env)
-- `SESSION_SECRET_KEY` - Secret key for session management
-- `SYNC_DATABASE_URL` - SQLite database URL for synchronous operations
-- `ASYNC_DATABASE_URL` - SQLite database URL for asynchronous operations
-- `LLM_API_KEY` - Zhipu API key for OpenAI-compatible LLM calls
-- `LLM_BASE_URL` - OpenAI-compatible API base URL (default: https://open.bigmodel.cn/api/paas/v4/)
-- `LL_MODEL` - Language model to use (default: glm-5.1)
-- `EMBEDDING_API_KEY` - Zhipu API key for embeddings, usually same as `LLM_API_KEY`
-- `EMBEDDING_BASE_URL` - OpenAI-compatible embedding API base URL
-- `EMBEDDING_MODEL` - Embedding model to use (default: embedding-3)
+- Backend `apps/backend/.env`: set `LLM_API_KEY` (required). `ENV=production` validates key/secret.
+- Frontend `apps/frontend/.env`: `NEXT_PUBLIC_API_URL=""` for same-origin deploy.
+- Full reference: `docs/CONFIGURING.md`
 
-### Frontend (.env)
-- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000)
+## Test
 
-## Development Workflow
-1. Start the backend server: `cd backend && python -m app.main`
-2. In another terminal, start the frontend development server: `cd frontend && npm run dev`
-3. Access the application at `http://localhost:3000`
-4. API documentation is available at `http://localhost:8000/api/docs`
+```bash
+cd apps/backend
+python test_e2e.py --base-url http://127.0.0.1:8000            # full (calls LLM)
+python test_e2e.py --base-url http://127.0.0.1:8000 --skip-llm # fast, no LLM
+```
+
+## Deploy
+
+Baota / nginx same-origin reverse proxy is the recommended deploy model.
+See `docs/BAOTA_DEPLOY.md` for the step-by-step guide (Gunicorn-native, no ASGI/WSGI pitfalls).
 
 ## Key Features
-- Resume to job description matching using AI
-- Tailwind CSS styling with modern UI components
-- Responsive design for all device sizes
-- SQLite database for local storage
-- RESTful API with comprehensive documentation
+
+- Resume to job description matching using AI (HRBP-perspective audit)
+- HR-style deep audit report with actionable suggestions
+- Optimized resume exported to a4cv visual editor
+- No database to install/migrate (JSON file storage, zero ops)
 - TypeScript type safety on frontend
-- FastAPI automatic OpenAPI documentation generation

@@ -2,31 +2,26 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for python-docx (resume parsing) and lxml
+# 系统依赖（pdfminer/lxml 编译需要）
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
-        curl \
         libxml2-dev \
         libxslt1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv (used by the project)
-RUN pip install --no-cache-dir uv
+# 先装依赖（利用层缓存）
+COPY apps/backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python deps first (better layer caching).
-# 以 pyproject.toml + uv.lock 为唯一权威依赖来源，用 uv pip sync 精确复现锁定版本，
-# 避免 requirements.txt 与 pyproject.toml 双入口漂移。
-COPY apps/backend/pyproject.toml apps/backend/uv.lock ./
-RUN uv pip sync --system uv.lock
+# 复制后端源码（Flask 极简版，7 个文件）
+COPY apps/backend/app.py apps/backend/config.py apps/backend/llm.py \
+     apps/backend/parser.py apps/backend/prompts.py apps/backend/run.py \
+     apps/backend/store.py ./
 
-# Copy backend source
-COPY apps/backend/app ./app
-
-# Persist SQLite + logs.
-# 卷管理统一交给 docker-compose.yml 的 named volumes，这里只确保目录存在，
-# 不再声明 VOLUME（否则 Docker 会额外创建匿名卷，与 compose 的命名卷冲突）。
+# 数据与日志目录（卷管理交给 docker-compose）
 RUN mkdir -p /app/data /app/logs
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Flask + gunicorn，宝塔/Docker 通用，无 ASGI/WSGI 坑
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "--timeout", "300", "app:app"]

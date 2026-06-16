@@ -1,36 +1,53 @@
-# UI
+# 前端（Next.js）
 
-## Getting Started
+简历优化工具的前端界面。基于 Next.js 15 + React 19 + TypeScript + Tailwind CSS。
 
-First, run the development server:
+## 开发
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd apps/frontend
+npm install
+npm run dev          # 开发模式，http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 生产构建
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start        # 生产模式
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 环境变量
 
-## Learn More
+复制 `.env.sample` 为 `.env`：
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# 同源部署（Docker / 宝塔 / nginx 反代）：必须是空字符串
+NEXT_PUBLIC_API_URL=""
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 本地开发（浏览器直连后端 8000）：
+# NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> `NEXT_PUBLIC_*` 是构建时注入的，改了 `.env` 必须重新 `npm run build`。
 
-## Deploy on Vercel
+## 自定义端口
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+默认 3000，改端口用 `-p`：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev -- -p 3001      # 开发
+npm run start -- -p 3001    # 生产
+```
+
+## 目录说明
+
+```
+app/              # 页面路由（首页、上传简历、粘贴 JD、dashboard）
+components/       # UI 与业务组件
+lib/api/          # 后端 API 客户端
+hooks/            # React hooks
+public/a4cv/      # a4cv 可视化简历编辑器静态资源
+```
+
+后端 API 地址由 `lib/api/config.ts` 的 `API_URL` 决定，所有请求形如 `${API_URL}/api/v1/...`。

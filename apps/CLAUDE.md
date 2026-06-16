@@ -5,97 +5,66 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Resume Matcher is an AI-powered platform that helps users optimize their resumes to match job descriptions. The application consists of:
-- Backend: FastAPI (Python) with SQLite database
+- Backend: **Flask (Python, sync)** with **JSON file storage** (no database)
 - Frontend: Next.js (React/TypeScript) with Tailwind CSS
-- AI: Zhipu OpenAI-compatible API for LLM and embedding calls
+- AI: any OpenAI-compatible API (default Zhipu glm-5.1)
 
 ## Common Development Commands
 
 ### Installation
 ```bash
-# Install all dependencies
-npm run install
-
-# Or install frontend and backend separately
-npm run install:frontend
-npm run install:backend
+npm run setup          # install root + frontend + backend deps
 ```
 
 ### Development
 ```bash
-# Run both frontend and backend in development mode
-npm run dev
-
-# Run only backend
-npm run dev:backend
-
-# Run only frontend
-npm run dev:frontend
+npm run dev            # run both frontend and backend
+npm run dev:backend    # backend only (python app.py)
+npm run dev:frontend   # frontend only (npm run dev)
 ```
 
-### Building
+### Building / Linting
 ```bash
-# Build the entire project
-npm run build
-
-# Build frontend only
-npm run build:frontend
-
-# Build backend only
-npm run build:backend
-```
-
-### Linting
-```bash
-# Run linting
-npm run lint
+npm run build          # build frontend + compile-check backend
+npm run lint           # frontend ESLint
 ```
 
 ### Production
 ```bash
-# Start production servers
-npm run start
-
-# Start production backend only
-npm run start:backend
-
-# Start production frontend only
-npm run start:frontend
+npm run start          # start both (gunicorn + next start)
 ```
 
 ## Code Architecture
 
-### Backend (FastAPI)
-- Entry point: `apps/backend/app/main.py`
-- Configuration: `apps/backend/app/core/config.py`
-- API routes: `apps/backend/app/api/router/v1/`
-- Services: `apps/backend/app/services/`
-- Database models: `apps/backend/app/models/`
-- Schemas: `apps/backend/app/schemas/`
+### Backend (Flask) — `apps/backend/`, 7 files
+- `app.py` — Flask app + all routes (8 endpoints, incl. SSE streaming)
+- `config.py` — config via os.getenv + dotenv
+- `llm.py` — OpenAI call + 3-level JSON parsing fallback
+- `parser.py` — PDF (pdfminer) / DOCX (stdlib zip+xml) text extraction
+- `prompts.py` — 3 prompt templates (structured_resume / structured_job / hr_judge)
+- `store.py` — JSON file storage (resumes/<uuid>.json, jobs/<uuid>.json)
+- `run.py` — local dev entry (`python run.py`); production uses `gunicorn app:app`
 
-Key services:
-- `resume_service.py`: Handles resume parsing and storage
-- `job_service.py`: Handles job description processing
-- `score_improvement_service.py`: Core logic for matching resumes with job descriptions
+API routes are in `app.py` directly (prefix `/api/v1/`). Health check at `/ping`.
+LLM call is a single function `llm.call_llm(prompt, expect_json=False)` — `temperature=0, top_p=0.9`.
 
-### Frontend (Next.js)
-- Entry point: `apps/frontend/`
-- API proxy configuration: `apps/frontend/next.config.ts` (proxies `/api_be/` to backend)
-- Components: `apps/frontend/components/`
-- Pages: `apps/frontend/app/`
+### Frontend (Next.js) — `apps/frontend/`
+- API client: `apps/frontend/lib/api/`
+- API base URL: `apps/frontend/lib/api/config.ts` (reads `NEXT_PUBLIC_API_URL`)
+- `next.config.ts` rewrites `/api/*` → backend
+- Pages: `apps/frontend/app/`, Components: `apps/frontend/components/`
 
-## Database
-- SQLite is used for local development
-- Database file: `apps/backend/app.db`
-- Async SQLAlchemy is used for database operations
+## Storage
+- JSON files under `apps/backend/data/` (`resumes/`, `jobs/`)
+- No database to install/migrate; backup = copy the `data/` directory
+- `analysis_result` is NOT persisted (returned per-request, same as before refactor)
 
 ## Environment Configuration
-- Root `.env` file (copied from `.env.example`)
-- Backend `.env` file (copied from `apps/backend/.env.sample`)
+- Backend: `apps/backend/.env` (from `.env.sample`) — must set `LLM_API_KEY`
+- Frontend: `apps/frontend/.env` (from `.env.sample`) — `NEXT_PUBLIC_API_URL=""` for same-origin deploy
+- See `docs/CONFIGURING.md` for full details
 
 ## AI Integration
-- Zhipu is used through the OpenAI-compatible API.
-- Default models:
-  - LLM: glm-5.1
-  - Embedding: embedding-3
-- Configure `LLM_API_KEY` in `apps/backend/.env` before running LLM-backed flows.
+- Calls any OpenAI-compatible endpoint via the official `openai` SDK
+- Default model: `glm-5.1`, base URL: Zhipu. Override `LLM_MODEL` / `LLM_BASE_URL` in `.env`
+- `LLM_API_KEY` required; `ENV=production` refuses to start without it

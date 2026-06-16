@@ -10,8 +10,6 @@ services:
       - apps/backend/.env
     environment:
       ENV: production
-      SYNC_DATABASE_URL: sqlite:////app/data/app.db
-      ASYNC_DATABASE_URL: sqlite+aiosqlite:////app/data/app.db
       LOG_DIR: /app/logs
     ports:
       - "8000:8000"

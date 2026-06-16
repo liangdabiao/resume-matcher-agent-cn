@@ -508,3 +508,50 @@ npm run dev        # 同时起前后端
 | 默认值（不设置） | ✅ 6 个本地端口 |
 | 后端 `compileall` + `create_app()` | ✅ 通过，CORS 中间件加载正确 |
 | 前端 `npm run build` | ✅ 8 个静态页生成 |
+
+---
+
+## 附录 C：后端从 FastAPI 重构为 Flask（2026-06-16，根治部署难题）
+
+### 背景
+
+附录 B 的「宝塔适配」虽缓解了部署问题，但根本矛盾仍在：**FastAPI 是异步（ASGI）框架，而宝塔 Python 项目管理器原生只支持 WSGI（Gunicorn/uWSGI）**。用户在宝塔上启动后端必然踩 ASGI/WSGI 的坑（`/ping` 返回 500），即使加了 `run.py` 绕路仍是治标不治本。
+
+经功能盘点发现：本项目是**单用户、单次 LLM 调用**的工具，FastAPI 的异步/依赖注入/Pydantic 全是为高并发微服务设计的，完全用不上。于是从架构层面彻底重构：**用 Flask（同步、宝塔原生支持）重写后端，用 JSON 文件存储替代 SQLite/ORM**。
+
+### 重构对比
+
+| 维度 | 重构前（FastAPI） | 重构后（Flask） |
+| --- | --- | --- |
+| 后端文件 | 50 个 .py | **7 个** .py |
+| 代码量 | ~2500 行 | **1040 行**（-58%） |
+| 依赖数 | 15 个 | **5 个**（flask/gunicorn/openai/pdfminer/dotenv） |
+| 数据库 | SQLAlchemy + aiosqlite 异步 ORM（双引擎 132 行） | **无**（JSON 文件存储，零运维） |
+| LLM 调用 | Agent 4 层抽象（Manager/Strategy/Provider/exceptions，190 行） | **1 个函数 50 行** |
+| 包管理 | uv + requirements + pyproject 三套 | **一套** `pip install -r requirements.txt` |
+| 宝塔启动 | ❌ 必须 run.py 绕 ASGI，调 UvicornWorker | ✅ **Gunicorn 直接跑 `app:app`**，宝塔原生 |
+| 日志 | Windows 专用 handler（72 行）+ 异步引擎 | 标准库 logging（5 行） |
+
+### 功能完整性
+
+**功能 100% 保留，前端零改动**：
+- 8 个 API 端点的路径、请求体、响应结构严格复刻（含 SSE 流式、`{detail, request_id}` 错误格式、`job_id` 数组、`compensation_and_benfits` 拼写陷阱等）
+- 3 个 prompt 模板（structured_resume / structured_job / hr_judge）原文照搬
+- PDF/DOCX 解析逻辑照搬
+- JSON 解析 3 级兜底逻辑照搬
+
+### 验证结果（完整 LLM 端到端测试 7/7 PASS）
+
+| 测试 | 结果 | 说明 |
+| --- | --- | --- |
+| `test_health` | ✅ | `/ping` 返回 `{"message":"pong","database":"reachable"}` |
+| `test_resume_upload` | ✅ | 上传 DOCX + LLM 结构化（40s） |
+| `test_job_upload` | ✅ | 上传 JD + LLM 结构化（14s） |
+| `test_improve_nonstream` | ✅ | 非流式分析，6229 字、2814 汉字、≥3 个 Step |
+| `test_improve_stream` | ✅ | **流式 SSE**——starting→parsing→analyzing→completed 完整 4 事件 |
+| `test_improved_markdown` | ✅ | markdown 提取，5 个 sections |
+| 前端 `npm run build` | ✅ | 8 页生成（零改动） |
+
+### 结论
+
+重构后，宝塔部署从「必踩 ASGI 坑」变成「Gunicorn 直接跑」，彻底根治了部署难题。附录 B 中提到的 `run.py` 绕路、UvicornWorker 配置等临时方案已不再需要。
